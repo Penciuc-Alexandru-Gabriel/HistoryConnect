@@ -1,0 +1,364 @@
+@page "/Clasament"
+@model HistoryConnect.Pages.Clasament.ClasamentModel
+@{
+    ViewData["Title"] = "Clasament";
+    ViewData["BodyClass"] = "theme-history";
+
+    string MedalieEmoji(int poz) => poz switch
+    {
+        1 => "🥇",
+        2 => "🥈",
+        3 => "🥉",
+        _ => $"{poz}."
+    };
+
+    string CuloarePoz(int poz) => poz switch
+    {
+        1 => "#FFD700",
+        2 => "#C0C0C0",
+        3 => "#CD7F32",
+        _ => "#806040"
+    };
+
+    string GlowPoz(int poz) => poz switch
+    {
+        1 => "0 0 20px rgba(255,215,0,.35)",
+        2 => "0 0 16px rgba(192,192,192,.25)",
+        3 => "0 0 14px rgba(205,127,50,.2)",
+        _ => "none"
+    };
+}
+
+<partial name="_HistoryStyles" />
+
+<style>
+    .clasament-page {
+        min-height: 100vh;
+        padding: 2.5rem 1rem 5rem;
+        position: relative;
+    }
+
+    .clasament-hero {
+        text-align: center;
+        padding: 2.5rem 1rem 2rem;
+        margin-bottom: 2.5rem;
+        position: relative;
+    }
+    .trophy-icon {
+        font-size: 4rem;
+        display: block;
+        margin-bottom: .6rem;
+        filter: drop-shadow(0 0 20px rgba(255,200,0,.5));
+        animation: trophyFloat 3s ease-in-out infinite;
+    }
+    @@keyframes trophyFloat {
+        0%,100% { transform: translateY(0); }
+        50%      { transform: translateY(-8px); }
+    }
+    .clasament-title {
+        font-family: 'Cinzel', serif;
+        font-size: clamp(1.6rem, 4vw, 2.6rem);
+        font-weight: 900;
+        color: #FFE898;
+        text-shadow: 0 2px 20px rgba(200,120,0,.5);
+        margin: 0 0 .4rem;
+        letter-spacing: .04em;
+    }
+    .clasament-subtitle {
+        font-family: 'IM Fell English', serif;
+        font-size: clamp(.85rem, 2vw, 1rem);
+        color: #806040;
+        letter-spacing: .08em;
+        font-style: italic;
+    }
+    .clasament-sep {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(200,120,0,.5) 30%, #FF8030 50%, rgba(200,120,0,.5) 70%, transparent);
+        margin: 1.5rem auto;
+        max-width: 500px;
+    }
+
+    /* ── Structură de tip Grid ── */
+    .clasament-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2rem;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    /* ── Panel-ul ── */
+    .clasament-panel {
+        background: linear-gradient(160deg, rgba(20,8,0,.95), rgba(14,4,0,.98));
+        border: 1px solid rgba(180,70,0,.3);
+        border-radius: 18px;
+        overflow: hidden;
+        backdrop-filter: blur(12px);
+    }
+    .panel-header {
+        padding: 1.1rem 1.4rem;
+        border-bottom: 1px solid rgba(180,70,0,.2);
+        background: rgba(180,70,0,.08);
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+    }
+    .panel-header-icon { font-size: 1.4rem; }
+    .panel-header-title {
+        font-family: 'Cinzel', serif;
+        font-size: .85rem;
+        font-weight: 700;
+        color: #FFD060;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+    .panel-header-sub {
+        font-size: .72rem;
+        color: #604030;
+        letter-spacing: .06em;
+        margin-top: 2px;
+    }
+
+    /* ── Rândul de înregistrare (entry) ── */
+    .entry-row {
+        display: flex;
+        align-items: center;
+        gap: .85rem;
+        padding: .85rem 1.2rem;
+        border-bottom: 1px solid rgba(140,50,0,.1);
+        transition: background .18s;
+        position: relative;
+    }
+    .entry-row:last-child { border-bottom: none; }
+    .entry-row:hover { background: rgba(200,80,0,.06); }
+    .entry-row.este-eu {
+        background: rgba(255,160,0,.07);
+        border-left: 3px solid rgba(255,160,0,.5);
+    }
+
+
+    /* ── Poziție ── */
+    .entry-poz {
+        font-family: 'Cinzel', serif;
+        font-size: 1rem;
+        font-weight: 900;
+        min-width: 34px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    /* ── Avatar ── */
+    .entry-avatar {
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Cinzel', serif;
+        font-size: .9rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, #7A3A00, #D06010);
+        border: 2px solid rgba(210,100,20,.35);
+        color: #FFE898;
+        transition: box-shadow .2s;
+    }
+    .entry-row:hover .entry-avatar {
+        border-color: rgba(255,160,0,.5);
+        box-shadow: 0 0 12px rgba(210,120,0,.3);
+    }
+
+    /* ── Informații ── */
+    .entry-info { flex: 1; min-width: 0; }
+    .entry-name {
+        font-family: 'Cinzel', serif;
+        font-size: .82rem;
+        font-weight: 600;
+        color: #FFE898;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .entry-level {
+        font-size: .7rem;
+        color: #604030;
+        margin-top: 2px;
+    }
+
+    /* ── Valoare XP ── */
+    .entry-xp {
+        font-family: 'Cinzel', serif;
+        font-size: .82rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        text-align: right;
+    }
+
+    /* ── State-ul gol (fără înregistrări) ── */
+    .panel-empty {
+        text-align: center;
+        padding: 3rem 1.5rem;
+        color: #4A2810;
+    }
+    .panel-empty .icon { font-size: 2.5rem; margin-bottom: .6rem; opacity: .4; }
+    .panel-empty p {
+        font-family: 'Cinzel', serif;
+        font-size: .78rem;
+        letter-spacing: .06em;
+    }
+
+    /* ── Evidențiere pentru Top 3 ── */
+    .entry-row.top1 { background: rgba(255,215,0,.04); }
+    .entry-row.top2 { background: rgba(192,192,192,.03); }
+    .entry-row.top3 { background: rgba(205,127,50,.03); }
+</style>
+
+<div class="clasament-page">
+
+    @* Fundal fix *@
+    <div class="fixed inset-0 z-0 pointer-events-none" style="background:var(--bg-global);"></div>
+    <div class="glow-orb orb-top" style="z-index:1;"></div>
+
+    <div style="position:relative; z-index:10;">
+
+        @* ── Hero ── *@
+        <div class="clasament-hero">
+            <span class="trophy-icon">🏆</span>
+            <h1 class="clasament-title">Clasamentul Istoricilor</h1>
+            <p class="clasament-subtitle">Cei mai vrednici exploratori ai istoriei României</p>
+            <div class="clasament-sep"></div>
+        </div>
+
+        @* ── Grid-ul de panel-uri ── *@
+        <div class="clasament-grid">
+
+            @* ── TOP GLOBAL ── *@
+            <div class="clasament-panel">
+                <div class="panel-header">
+                    <span class="panel-header-icon">⚔️</span>
+                    <div>
+                        <div class="panel-header-title">Top Global</div>
+                        <div class="panel-header-sub">Clasament după XP total acumulat</div>
+                    </div>
+                </div>
+
+                @if (!Model.TopGlobal.Any())
+                {
+                    <div class="panel-empty">
+                        <div class="icon">📜</div>
+                        <p>Niciun student înscris încă.</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var e in Model.TopGlobal)
+                    {
+                        var esteEu = e.IdUtilizator == Model.IdUtilizatorCurent;
+                        var rowClass = $"entry-row {(e.Pozitie == 1 ? "top1" : e.Pozitie == 2 ? "top2" : e.Pozitie == 3 ? "top3" : "")} {(esteEu ? "este-eu" : "")}";
+
+                        <div class="@rowClass">
+                            <div class="entry-poz" style="color:@CuloarePoz(e.Pozitie); text-shadow:@GlowPoz(e.Pozitie);">
+                                @MedalieEmoji(e.Pozitie)
+                            </div>
+                            <div class="entry-avatar"
+                                 style="@(e.Pozitie <= 3 ? $"border-color:{CuloarePoz(e.Pozitie)}55; box-shadow:{GlowPoz(e.Pozitie)};" : "")">
+                                @e.Initiala
+                            </div>
+                            <div class="entry-info">
+                                <div class="entry-name" style="display:flex;align-items:center;gap:.4rem;">
+                                    @e.Nume
+                                    @if (esteEu) {
+                                        <span style="font-size:.52rem;font-family:'Cinzel',serif;font-weight:700;
+                                                     color:#FFD060;letter-spacing:.1em;
+                                                     background:rgba(255,200,0,.12);
+                                                     border:1px solid rgba(255,200,0,.3);
+                                                     border-radius:4px;padding:1px 5px;flex-shrink:0;">TU</span>
+                                    }
+                                </div>
+                                <div class="entry-level">Nivel @e.NivelCurent</div>
+                            </div>
+                            <div class="entry-xp" style="color:@CuloarePoz(e.Pozitie);">
+                                @e.ValoareAfisata
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            @* ── TOP LUNAR ── *@
+            <div class="clasament-panel">
+                <div class="panel-header">
+                    <span class="panel-header-icon">📅</span>
+                    <div>
+                        <div class="panel-header-title">Top Luna Aceasta</div>
+                        <div class="panel-header-sub" style="text-transform:capitalize;">@Model.LunaAfisata</div>
+                    </div>
+                </div>
+
+                @if (!Model.TopLunar.Any())
+                {
+                    <div class="panel-empty">
+                        <div class="icon">🌙</div>
+                        <p>Niciun quiz-uri completat luna aceasta.</p>
+                        <p style="margin-top:.4rem; font-size:.65rem; color:#3A1808;">Fii primul pe listă!</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var e in Model.TopLunar)
+                    {
+                        var esteEu = e.IdUtilizator == Model.IdUtilizatorCurent;
+                        var rowClass = $"entry-row {(e.Pozitie == 1 ? "top1" : e.Pozitie == 2 ? "top2" : e.Pozitie == 3 ? "top3" : "")} {(esteEu ? "este-eu" : "")}";
+
+                        <div class="@rowClass">
+                            <div class="entry-poz" style="color:@CuloarePoz(e.Pozitie); text-shadow:@GlowPoz(e.Pozitie);">
+                                @MedalieEmoji(e.Pozitie)
+                            </div>
+                            <div class="entry-avatar"
+                                 style="@(e.Pozitie <= 3 ? $"border-color:{CuloarePoz(e.Pozitie)}55; box-shadow:{GlowPoz(e.Pozitie)};" : "")">
+                                @e.Initiala
+                            </div>
+                            <div class="entry-info">
+                                <div class="entry-name" style="display:flex;align-items:center;gap:.4rem;">
+                                    @e.Nume
+                                    @if (esteEu) {
+                                        <span style="font-size:.52rem;font-family:'Cinzel',serif;font-weight:700;
+                                                     color:#FFD060;letter-spacing:.1em;
+                                                     background:rgba(255,200,0,.12);
+                                                     border:1px solid rgba(255,200,0,.3);
+                                                     border-radius:4px;padding:1px 5px;flex-shrink:0;">TU</span>
+                                    }
+                                </div>
+                                <div class="entry-level">Nivel @e.NivelCurent</div>
+                            </div>
+                            <div class="entry-xp" style="color:@CuloarePoz(e.Pozitie);">
+                                @e.ValoareAfisata
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+        </div>
+
+        @* ── Notă pentru utilizatorii nelogați ── *@
+        @if (Model.IdUtilizatorCurent == null)
+        {
+            <div style="text-align:center; margin-top:2.5rem;">
+                <p style="font-family:'Cinzel',serif; font-size:.78rem; color:#604030; letter-spacing:.06em;">
+                    🔒 Creează un cont pentru a apărea în clasament.
+                </p>
+                <a href="/Cont/Logare-Inregistrare/Register"
+                   style="display:inline-block; margin-top:.75rem; padding:.6rem 1.6rem;
+                          background:linear-gradient(135deg,#8B1A00,#D04000,#FF6020);
+                          color:#FFE898; font-family:'Cinzel',serif; font-size:.75rem; font-weight:700;
+                          border-radius:10px; text-decoration:none; letter-spacing:.06em;
+                          border:1.5px solid #FF6030; box-shadow:0 4px 20px rgba(200,60,0,.35);
+                          transition:all .2s;"
+                   onmouseover="this.style.boxShadow='0 4px 28px rgba(200,60,0,.55)'"
+                   onmouseout="this.style.boxShadow='0 4px 20px rgba(200,60,0,.35)'">
+                    🚀 Înscrie-te gratuit
+                </a>
+            </div>
+        }
+
+    </div>
+</div>

@@ -1,0 +1,197 @@
+@model HistoryConnect.Pages.IndexModel
+@{
+    if (!Model.AccesPermis || Model.LectieActiva == null) { return; }
+    var lesson = Model.LectieActiva;
+    var areQuiz = lesson.Quizuri != null && lesson.Quizuri.Any();
+    var primuLQuiz = areQuiz ? lesson.Quizuri!.First() : null;
+    var returnUrl = $"/?period={Model.PerioadaSelectata?.IdPerioada}&capitol={lesson.IdCapitol}&category={Model.CategorieCurenta}";
+
+    static string NormalizeUrl(string url)
+        => (url ?? "").Replace('\\', '/');
+
+    static bool EsteImagine(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return false;
+        var u = NormalizeUrl(url).ToLowerInvariant().Split('?')[0];
+        return u.EndsWith(".jpg") || u.EndsWith(".jpeg") || u.EndsWith(".png")
+            || u.EndsWith(".gif") || u.EndsWith(".webp") || u.EndsWith(".svg");
+    }
+}
+
+@* ── Modal Finalizare ── *@
+<div class="finalizare-modal-overlay fixed inset-0 z-1000 hidden items-center justify-center"
+     style="background:rgba(0,0,0,0.75); backdrop-filter:blur(4px);"
+     id="finalizareModal">
+    <div class="rounded-2xl p-10 max-w-105 w-[90%] text-center shadow-[0_0_60px_rgba(200,72,0,0.25)]"
+         style="background:linear-gradient(160deg,#1a0800,#0d0400); border:1.5px solid rgba(200,100,0,0.4);">
+
+        <div class="text-5xl mb-4">🎓</div>
+        <div class="font-bold text-lg mb-2" style="font-family:'Cinzel',serif; color:#f5d78e;">
+            Ai terminat lecția!
+        </div>
+
+        @if (areQuiz)
+        {
+            <div class="mb-7 text-sm leading-relaxed" style="color:#a07050;">
+                Vrei să-ți testezi cunoștințele cu un quiz?<br/>
+                Poți câștiga <strong style="color:#ffd060;">⭐ XP</strong> la prima completare!
+            </div>
+            <div class="flex flex-col gap-3">
+                <a class="block py-3 px-5 rounded-lg no-underline text-base transition-opacity duration-200 hover:opacity-85"
+                   href="/Quiz/Quiz?quizId=@primuLQuiz!.IdQuiz"
+                   style="background:linear-gradient(135deg,#c84800,#8b2000); color:#f5d78e; font-family:'Georgia',serif;">
+                    🎯 Da, vreau să fac quizul!
+                </a>
+                <form method="post" asp-page-handler="FinalizeazaLectie" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="lectieId" value="@lesson.IdLectie" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button type="submit"
+                            class="w-full py-3 px-5 rounded-lg cursor-pointer text-sm transition-all duration-200 hover:border-[#c8864a] hover:text-[#c8864a]"
+                            style="background:transparent; color:#a07050; border:1px solid rgba(255,255,255,0.12); font-family:'Georgia',serif;">
+                        ✓ Finalizează fără quiz
+                    </button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <div class="mb-7 text-sm leading-relaxed" style="color:#a07050;">
+                Aceasta lecție nu are un quiz asociat.<br/>
+                Progresul tău va fi salvat.
+            </div>
+            <div class="flex flex-col gap-3">
+                <form method="post" asp-page-handler="FinalizeazaLectie" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="lectieId" value="@lesson.IdLectie" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button type="submit"
+                            class="w-full py-3 px-5 rounded-lg cursor-pointer text-base transition-opacity duration-200 hover:opacity-85"
+                            style="background:linear-gradient(135deg,#c84800,#8b2000); color:#f5d78e; font-family:'Georgia',serif;">
+                        ✓ Finalizează Lectia
+                    </button>
+                </form>
+                <button class="py-3 px-5 rounded-lg cursor-pointer text-sm transition-all duration-200 hover:border-[#c8864a] hover:text-[#c8864a]"
+                        onclick="closeFinalizareModal()"
+                        style="background:transparent; color:#a07050; border:1px solid rgba(255,255,255,0.12); font-family:'Georgia',serif;">
+                    ← Înapoi la lecție
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+@* ── Conținut lecție ── *@
+<div class="max-w-225 mx-auto my-8 px-4">
+
+    <h2 class="font-bold mb-6"
+        style="font-family:'Cinzel',serif; font-size:clamp(18px,3vw,28px); color:var(--gold-pale);
+               text-shadow:0 2px 10px rgba(0,0,0,.8);">
+        @lesson.Titlu
+    </h2>
+
+    <div class="rounded-[10px] overflow-hidden shadow-[0_6px_32px_rgba(0,0,0,.25)]"
+         style="background:linear-gradient(135deg,#fff0d4,#e6c898);">
+
+        @* Reader header *@
+        <div class="p-[clamp(16px,3vw,28px)] border-b-[3px] border-[#FF6020]"
+             style="background:linear-gradient(135deg,#5A1200,#9A2800,#C03800);">
+            <h3 class="font-bold m-0 text-[#FFE898]"
+                style="font-family:'Cinzel',serif; font-size:clamp(14px,2vw,18px);">
+                📖 @lesson.Titlu
+            </h3>
+        </div>
+
+        @* Reader body *@
+        <div class="p-[clamp(20px,4vw,44px)]" style="color:#380C00;">
+
+            @* ── Imagine principală (câmpul UrlImagine din lecție) ── *@
+            @if (!string.IsNullOrEmpty(lesson.UrlImagine))
+            {
+                <div class="mb-6 rounded-lg overflow-hidden shadow-md" style="display:inline-block; max-width:100%;">
+                    <img src="@NormalizeUrl(lesson.UrlImagine!)"
+                         alt="@lesson.Titlu"
+                         style="max-width:100%; height:auto; border-radius:8px; display:block;" />
+                </div>
+            }
+
+            @* ── Conținut text + imagini inline ── *@
+            @if (!string.IsNullOrEmpty(lesson.Continut))
+            {
+                @foreach (var para in lesson.Continut.Split("\n", StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var trimmed = para.Trim();
+                    @if (EsteImagine(trimmed))
+                    {
+                        @* Linie care e URL de imagine — afișează ca <img> *@
+                        <div class="my-5 rounded-lg overflow-hidden shadow-md">
+                            <img src="@NormalizeUrl(trimmed)"
+                                 alt="Imagine lecție"
+                                 style="max-width:100%; height:auto; border-radius:8px; display:block;" />
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="mb-4 leading-relaxed"
+                           style="font-family:'IM Fell English',Georgia,serif; font-size:15px;">@trimmed</p>
+                    }
+                }
+            }
+        </div>
+    </div>
+
+    @* Buton finalizare sau status finalizat *@
+    @{
+        bool lectieCompletata = Model.LectiiCompletateIds.Contains(lesson.IdLectie);
+    }
+
+    @if (lectieCompletata)
+    {
+        <div class="flex items-center gap-3 mt-9 flex-wrap">
+            <span class="inline-flex items-center gap-2 px-6 py-3 rounded-[10px] text-base"
+                  style="background:rgba(0,180,80,.12); border:1.5px solid rgba(0,200,80,.3); color:#40c060;">
+                ✓ Lecție finalizată
+            </span>
+            <form method="post" asp-page-handler="DeFinalizatLectie" class="m-0">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="lectieId" value="@lesson.IdLectie" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <button type="submit"
+                        class="inline-flex items-center gap-2 px-5 py-3 rounded-[10px] cursor-pointer text-sm transition-all duration-200 hover:border-[rgba(200,80,0,.5)] hover:text-[#c8864a]"
+                        style="background:transparent; border:1.5px solid rgba(200,80,0,.25); color:#a07050; font-family:'Georgia',serif;">
+                    ↩ Marchează ca nefinalizată
+                </button>
+            </form>
+        </div>
+    }
+    else
+    {
+        <button class="inline-flex items-center gap-2.5 mt-9 cursor-pointer transition-[opacity,transform] duration-200 hover:opacity-85 hover:-translate-y-px"
+                style="padding:14px 32px; background:linear-gradient(135deg,#1a6b00,#0d3d00);
+                       border:1.5px solid rgba(80,200,80,0.3); color:#90ee90; border-radius:10px;
+                       font-size:1rem; font-family:'Georgia',serif;"
+                onclick="openFinalizareModal()">
+            ✓ Finalizează Lecția
+        </button>
+    }
+
+</div>
+
+<script>
+    function openFinalizareModal() {
+        const m = document.getElementById('finalizareModal');
+        m.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeFinalizareModal() {
+        const m = document.getElementById('finalizareModal');
+        m.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    document.getElementById('finalizareModal').addEventListener('click', function(e) {
+        if (e.target === this) closeFinalizareModal();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeFinalizareModal();
+    });
+</script>

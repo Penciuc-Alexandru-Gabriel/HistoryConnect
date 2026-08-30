@@ -1,0 +1,638 @@
+@page
+@model HistoryConnect.Pages.QuizModel
+@Html.AntiForgeryToken()
+@{
+    ViewData["Title"] = "Quiz";
+    HistoryConnect.Models.Quiz? quiz = Model.QuizActiv;
+}
+
+<partial name="_HistoryStyles" />
+
+<div class="page-bg" style="position:fixed;inset:0;z-index:0;pointer-events:none;"></div>
+<div style="position:fixed;top:-12%;left:-8%;width:clamp(150px,30vw,380px);height:clamp(150px,30vw,380px);border-radius:50%;background:radial-gradient(circle,#C84800 0%,#600800 45%,transparent 70%);opacity:.45;z-index:1;pointer-events:none;"></div>
+<div id="embers" style="position:fixed;inset:0;overflow:hidden;z-index:1;pointer-events:none;"></div>
+
+<style>
+.qp-question-card        { display: none; }
+.qp-question-card.active { display: block; }
+
+.qp-option:hover:not(:disabled) {
+    background: rgba(200,80,0,.15);
+    border-color: rgba(200,80,0,.5);
+    transform: translateX(4px);
+}
+.qp-option:disabled { cursor: default; transform: none; }
+
+.qp-option.correct             { background: rgba(0,180,80,.15); border-color: rgba(0,200,80,.5); color: #80ffb0; }
+.qp-option.correct .opt-letter { background: rgba(0,180,80,.3);  border-color: #00c850; color: #80ffb0; }
+
+.qp-option.correct-miss             { background: rgba(0,100,50,.08); border: 1px dashed rgba(0,200,80,.4); color: #60b080; }
+.qp-option.correct-miss .opt-letter { background: rgba(0,100,50,.15); border-color: rgba(0,200,80,.3); color: #60b080; }
+
+.qp-option.wrong             { background: rgba(200,0,0,.15); border-color: rgba(200,0,0,.4); color: #ff8080; }
+.qp-option.wrong .opt-letter { background: rgba(200,0,0,.25); border-color: #c80000; color: #ff8080; }
+
+.qp-option.selected             { background: rgba(200,80,0,.2); border-color: rgba(200,80,0,.6); color: #ffaa66; }
+.qp-option.selected .opt-letter { background: rgba(200,80,0,.3); border-color: #c84800; color: #ff9955; }
+
+.qp-inline-feedback         { display: none; }
+.qp-inline-feedback.show    { display: block; }
+.qp-inline-feedback.ok      { background: rgba(0,180,80,.1);  color: #80ffb0; border-left: 3px solid #00c850; }
+.qp-inline-feedback.partial { background: rgba(200,150,0,.1); color: #ffcc44; border-left: 3px solid #c8a000; }
+.qp-inline-feedback.bad     { background: rgba(200,0,0,.1);   color: #ff8080; border-left: 3px solid #c80000; }
+
+.qp-next-btn            { display: none; }
+.qp-next-btn.visible    { display: inline-block; }
+
+.qp-confirm-btn         { display: none; }
+.qp-confirm-btn.visible { display: inline-block; }
+
+.qp-result      { display: none; }
+.qp-result.show { display: flex; }
+
+.qp-progress-fill { transition: width .4s ease; }
+</style>
+
+@if (quiz == null)
+{
+    <div class="relative z-10 max-w-205 mx-auto px-5 pt-10 pb-20 font-serif">
+        <p class="text-[#c8864a] text-center mt-20">Quiz-ul nu a fost gasit.</p>
+    </div>
+}
+else
+{
+    var intrebari       = quiz.Intrebari.OrderBy(i => i.IdIntrebare).ToList();
+    var lectieId        = Model.Lectie?.IdLectie ?? 0;
+    var lectieReturnUrl = Model.Lectie?.Capitol == null
+        ? "/"
+        : $"/?period={Model.Lectie.Capitol.IdPerioada}&capitol={Model.Lectie.IdCapitol}&category={Model.Lectie.Tip}&lessonId={lectieId}";
+
+    <div class="relative z-10 max-w-205 mx-auto px-5 pt-10 pb-20 font-serif">
+
+        @* ── Intro screen ─────────────────────────────── *@
+        <div id="qp-intro"
+             style="display:flex;"
+             class="flex-col items-center text-center
+                    bg-[rgba(20,8,0,.85)] border border-[rgba(200,100,0,.3)]
+                    rounded-2xl px-10 py-15 shadow-[0_8px_40px_rgba(0,0,0,.5)]">
+            <div class="text-[4rem] mb-4">🎯</div>
+            <h2 class="text-[2rem] text-[#f5d78e] mb-2">@quiz.Titlu</h2>
+            <p class="text-[1.1rem] text-[#c8864a] mb-8">Esti gata sa incepi testul? Ai @intrebari.Count intrebari.</p>
+            <div class="mb-7.5 text-[#e8d5b0]">
+                @if (quiz.Timp > 0) { <p>⏱ Timp limita: <strong>@quiz.Timp secunde</strong></p> }
+                <p>⭐ Recompensa: <strong>+@quiz.XpCompletare XP</strong></p>
+            </div>
+            <button class="px-7 py-3 rounded-lg text-base cursor-pointer transition-opacity duration-200
+                           bg-linear-to-br from-[#c84800] to-[#8b2000]
+                           text-[#f5d78e] border-none font-[inherit] hover:opacity-80"
+                    onclick="startQuizNow()">Incepe Acum</button>
+        </div>
+
+        @* ── Main quiz content ─────────────────────────── *@
+        <div id="qp-main-content" style="display:none;">
+
+            <div class="text-center mb-12">
+                <a class="inline-flex items-center gap-1.5 text-[#c8864a] no-underline text-[.9rem] mb-6
+                          transition-colors duration-200 hover:text-[#ffaa66]"
+                   href="@lectieReturnUrl">← Inapoi la lectie</a>
+                <h1 class="text-[clamp(1.6rem,4vw,2.4rem)] text-[#f5d78e]
+                           [text-shadow:0_2px_12px_rgba(200,80,0,.6)] m-0 mb-3">🎯 @quiz.Titlu</h1>
+                <div class="flex justify-center gap-4 flex-wrap">
+                    @if (quiz.XpCompletare > 0)
+                    {
+                        <span class="px-3.5 py-1.5 rounded-full text-[.85rem] font-semibold border border-white/15
+                                     bg-[rgba(255,180,0,.15)] text-[#ffd060]">⭐ +@quiz.XpCompletare XP</span>
+                    }
+                    @if (quiz.Timp > 0)
+                    {
+                        <span class="px-3.5 py-1.5 rounded-full text-[.85rem] font-semibold border border-white/15
+                                     bg-[rgba(255,100,0,.15)] text-[#ff9955]">⏱ <span id="timer-val">@quiz.Timp</span> secunde</span>
+                    }
+                    <span class="px-3.5 py-1.5 rounded-full text-[.85rem] font-semibold border border-white/15
+                                 text-[#a07050]">📋 @intrebari.Count intrebari</span>
+                </div>
+            </div>
+
+            <div class="mb-9">
+                <div class="flex justify-between text-[.85rem] text-[#a07050] mb-2">
+                    <span id="progress-label">Intrebarea 1 din @intrebari.Count</span>
+                    <span id="progress-pct">0%</span>
+                </div>
+                <div class="h-1.5 bg-white/8 rounded-sm overflow-hidden">
+                    <div class="qp-progress-fill h-full bg-linear-to-r from-[#c84800] to-[#ff8c00] rounded-sm w-0"
+                         id="progress-fill"></div>
+                </div>
+            </div>
+
+            @* ── Question cards ────────────────────────── *@
+            @for (int idx = 0; idx < intrebari.Count; idx++)
+            {
+                var q       = intrebari[idx];
+                var letters = new[] { "A", "B", "C", "D", "E" };
+
+                <div class="qp-question-card @(idx == 0 ? "active" : "")
+                            bg-[rgba(20,8,0,.75)] border border-[rgba(200,100,0,.25)]
+                            rounded-2xl px-10 py-9 mb-6 shadow-[0_8px_32px_rgba(0,0,0,.4)]"
+                     data-index="@idx"
+                     data-id="@q.IdIntrebare"
+                     data-feedback="@q.Feedback">
+
+                    <div class="text-[.8rem] text-[#c8864a] uppercase tracking-widest mb-3">
+                        Intrebarea @(idx + 1) / @intrebari.Count
+                    </div>
+                    <p class="text-[1.25rem] text-[#f5d78e] leading-relaxed mb-7">@q.Text</p>
+
+                    <div class="flex flex-col gap-3">
+                        @{ var variante = q.Variante.OrderBy(v => v.IdVarianta).ToList(); }
+                        @for (int vi = 0; vi < variante.Count; vi++)
+                        {
+                            var v = variante[vi];
+                            <button class="qp-option flex items-center gap-3.5 px-5 py-3.5
+                                           bg-white/4 border border-[rgba(200,100,0,.2)] rounded-[10px]
+                                           cursor-pointer text-base text-[#e8d5b0]
+                                           transition-all duration-200 text-left w-full"
+                                    data-correct="@v.Corect.ToString().ToLower()"
+                                    data-punctaj="@v.Punctaj"
+                                    data-varianta-id="@v.IdVarianta">
+                                <span class="opt-letter shrink-0 min-w-8 h-8 rounded-full
+                                             bg-[rgba(200,80,0,.2)] border border-[rgba(200,80,0,.4)]
+                                             flex items-center justify-center
+                                             font-bold text-[.85rem] text-[#ff9955]
+                                             transition-colors duration-200">
+                                    @(vi < letters.Length ? letters[vi] : (vi + 1).ToString())
+                                </span>
+                                @v.Text
+                            </button>
+                        }
+                    </div>
+
+                    <div class="qp-inline-feedback mt-4 px-4 py-3 rounded-lg text-[.95rem]"
+                         id="fb-@q.IdIntrebare"></div>
+
+                    <div class="flex gap-3 mt-6 flex-wrap">
+                        <button class="qp-confirm-btn px-8 py-3
+                                       bg-linear-to-br from-[#805000] to-[#4a2800]
+                                       text-[#f5d78e] border border-[rgba(200,120,0,.4)] rounded-lg
+                                       text-base font-[inherit] cursor-pointer
+                                       transition-all duration-200 hover:opacity-90 hover:-translate-y-px"
+                                id="confirm-@q.IdIntrebare"
+                                onclick="confirmMultipleChoice(@q.IdIntrebare)">
+                            ✓ Confirma selectia
+                        </button>
+                        <button class="qp-next-btn px-8 py-3
+                                       bg-linear-to-br from-[#c84800] to-[#8b2000]
+                                       text-[#f5d78e] border-none rounded-lg
+                                       text-base font-[inherit] cursor-pointer
+                                       transition-all duration-200 hover:opacity-90 hover:-translate-y-px"
+                                id="next-@idx"
+                                onclick="nextQuestion(@idx, @intrebari.Count)">
+                            @(idx == intrebari.Count - 1 ? "Vezi rezultatul →" : "Urmatoarea →")
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* ── Result screen ─────────────────────────────── *@
+        <div class="qp-result flex-col items-center text-center
+                    bg-[rgba(20,8,0,.85)] border border-[rgba(200,100,0,.3)]
+                    rounded-2xl px-10 py-15 shadow-[0_8px_40px_rgba(0,0,0,.5)]"
+             id="qp-result">
+            <div class="text-[4rem] mb-4" id="res-icon">🏆</div>
+            <h2 class="text-[2rem] text-[#f5d78e] mb-2" id="res-title">Felicitari!</h2>
+            <p class="text-[1.1rem] text-[#c8864a] mb-8" id="res-score"></p>
+            @if (!string.IsNullOrEmpty(quiz.Feedback))
+            {
+                <p class="text-[#c8864a] mb-8">💡 @quiz.Feedback</p>
+            }
+            <div class="flex gap-4 flex-wrap justify-center">
+                <button class="px-7 py-3 rounded-lg text-base font-[inherit] cursor-pointer
+                               transition-opacity duration-200 bg-linear-to-br from-[#c84800] to-[#8b2000]
+                               text-[#f5d78e] border-none hover:opacity-80"
+                        onclick="retryQuiz()">🔄 Incearca din nou</button>
+                <a class="px-7 py-3 rounded-lg text-base font-[inherit] cursor-pointer no-underline
+                          transition-opacity duration-200 bg-white/[.07] text-[#e8d5b0]
+                          border border-white/15 hover:opacity-80"
+                   href="@lectieReturnUrl">📖 Inapoi la lectie</a>
+            </div>
+        </div>
+
+    </div>
+}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+(function () {
+    const ec = document.getElementById('embers');
+    if (!ec) return;
+    const clr = ['#FF5500', '#FF8800', '#FFAA00', '#FF3300'];
+    for (let i = 0; i < 20; i++) {
+        const e = document.createElement('div');
+        e.className = 'ember';
+        const s = Math.random() * 4 + 2;
+        const c = clr[Math.floor(Math.random() * clr.length)];
+        e.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;bottom:-8px;background:${c};` +
+            `box-shadow:0 0 ${s*2}px ${c};animation-delay:${Math.random()*8}s;` +
+            `animation-duration:${Math.random()*5+7}s;--d:${(Math.random()-.5)*100}px;` +
+            `position:absolute;border-radius:50%;animation-name:rise;` +
+            `animation-timing-function:linear;animation-iteration-count:infinite;opacity:0`;
+        ec.appendChild(e);
+    }
+})();
+const totalIntrebari = document.querySelectorAll('.qp-question-card').length;
+
+let punctajObtinutTotal = 0;
+let punctajMaximTotal = 0;
+
+const answeredMap = {};
+const selectedMap = {};
+const timpInitial  = @(quiz?.Timp ?? 0);
+let timeLeft       = timpInitial;
+let timerInterval  = null;
+
+document.querySelectorAll('.qp-question-card').forEach(card => {
+    const varianteCorecte = [...card.querySelectorAll('.qp-option[data-correct="true"]')];
+    const esteMultiple    = varianteCorecte.length > 1;
+
+    card.dataset.multiple = esteMultiple ? 'true' : 'false';
+
+    const punctajMaxIntrebare = varianteCorecte.reduce((sum, btn) => {
+        return sum + parseInt(btn.dataset.punctaj || '0');
+    }, 0);
+
+    card.dataset.punctajMax = punctajMaxIntrebare.toString();
+    punctajMaximTotal += punctajMaxIntrebare;
+
+    if (esteMultiple) {
+        selectedMap[card.dataset.id] = new Set();
+    }
+});
+
+document.querySelectorAll('.qp-question-card').forEach(card => {
+    card.querySelectorAll('.qp-option').forEach(btn => {
+        btn.addEventListener('click', function () {
+            if (card.dataset.answered) return;
+
+            if (card.dataset.multiple === 'true') {
+                handleMultipleToggle(card, this);
+            } else {
+                handleSingleChoice(card, this);
+            }
+        });
+    });
+});
+
+function handleSingleChoice(card, btn) {
+    card.dataset.answered = 'true';
+
+    const variantaId = btn.dataset.variantaId;
+    answeredMap[card.dataset.id] = variantaId ? [parseInt(variantaId)] : [];
+
+    const esteCorect = btn.dataset.correct === 'true';
+    const punctaj = parseInt(btn.dataset.punctaj || '0');
+    const punctajMaxIntrebare = parseInt(card.dataset.punctajMax || '0');
+
+    let punctajObtinutIntrebare = esteCorect ? punctaj : -punctaj;
+
+    punctajObtinutIntrebare = Math.max(0, punctajObtinutIntrebare);
+    punctajObtinutIntrebare = Math.min(punctajObtinutIntrebare, punctajMaxIntrebare);
+
+    punctajObtinutTotal += punctajObtinutIntrebare;
+
+    btn.classList.add(esteCorect ? 'correct' : 'wrong');
+
+    if (!esteCorect) {
+        card.querySelectorAll('.qp-option[data-correct="true"]').forEach(b => {
+            b.classList.add('correct');
+        });
+    }
+
+    card.querySelectorAll('.qp-option').forEach(b => b.disabled = true);
+
+    showFeedbackSingle(card, esteCorect);
+    document.getElementById('next-' + card.dataset.index)?.classList.add('visible');
+}
+
+function handleMultipleToggle(card, btn) {
+    const variantaId = parseInt(btn.dataset.variantaId);
+    const sel = selectedMap[card.dataset.id];
+
+    if (sel.has(variantaId)) {
+        sel.delete(variantaId);
+        btn.classList.remove('selected');
+    } else {
+        sel.add(variantaId);
+        btn.classList.add('selected');
+    }
+
+    document.getElementById('confirm-' + card.dataset.id)?.classList.toggle('visible', sel.size > 0);
+}
+
+function confirmMultipleChoice(cardId) {
+    const card = document.querySelector(`.qp-question-card[data-id="${cardId}"]`);
+    if (!card || card.dataset.answered) return;
+
+    card.dataset.answered = 'true';
+
+    const sel = selectedMap[cardId];
+    const punctajMaxIntrebare = parseInt(card.dataset.punctajMax || '0');
+
+    let punctajObtinutIntrebare = 0;
+
+    const idsCorecte = new Set(
+        [...card.querySelectorAll('.qp-option[data-correct="true"]')]
+            .map(b => parseInt(b.dataset.variantaId))
+    );
+
+    card.querySelectorAll('.qp-option').forEach(btn => {
+        const id = parseInt(btn.dataset.variantaId);
+        const esteCorect = btn.dataset.correct === 'true';
+        const esteSelectat = sel.has(id);
+        const punctaj = parseInt(btn.dataset.punctaj || '0');
+
+        btn.classList.remove('selected');
+        btn.disabled = true;
+
+        if (esteCorect && esteSelectat) {
+            punctajObtinutIntrebare += punctaj;
+            btn.classList.add('correct');
+        } else if (esteCorect && !esteSelectat) {
+            btn.classList.add('correct-miss');
+        } else if (!esteCorect && esteSelectat) {
+            punctajObtinutIntrebare -= punctaj;
+            btn.classList.add('wrong');
+        }
+    });
+
+    punctajObtinutIntrebare = Math.max(0, punctajObtinutIntrebare);
+    punctajObtinutIntrebare = Math.min(punctajObtinutIntrebare, punctajMaxIntrebare);
+
+    punctajObtinutTotal += punctajObtinutIntrebare;
+    answeredMap[cardId] = [...sel];
+
+    const nrCorecteSelectate = [...sel].filter(id => idsCorecte.has(id)).length;
+    const nrGresite = [...sel].filter(id => !idsCorecte.has(id)).length;
+    const totalCorecte = idsCorecte.size;
+
+    showFeedbackMultiple(card, nrCorecteSelectate, totalCorecte, nrGresite);
+
+    document.getElementById('confirm-' + cardId)?.classList.remove('visible');
+    document.getElementById('next-' + card.dataset.index)?.classList.add('visible');
+}
+
+function showFeedbackSingle(card, isCorrect) {
+    const fb = document.getElementById('fb-' + card.dataset.id);
+    if (!fb) return;
+
+    const expl = (card.dataset.feedback || '').trim();
+    fb.textContent = (isCorrect ? '✅ Corect!' : '❌ Raspuns gresit.') + (expl ? ' ' + expl : '');
+    fb.className = 'qp-inline-feedback show ' + (isCorrect ? 'ok' : 'bad');
+}
+
+function showFeedbackMultiple(card, nrCorecteSelectate, totalCorecte, nrGresite) {
+    const fb = document.getElementById('fb-' + card.dataset.id);
+    if (!fb) return;
+
+    const expl = (card.dataset.feedback || '').trim();
+
+    let text;
+    let cls;
+
+    if (nrCorecteSelectate === totalCorecte && nrGresite === 0) {
+        text = '✅ Corect! Ai selectat toate variantele corecte.';
+        cls = 'ok';
+    } else if (nrCorecteSelectate > 0 && nrGresite === 0) {
+        text = `⚠️ Partial: ${nrCorecteSelectate} din ${totalCorecte} variante corecte selectate.`;
+        cls = 'partial';
+    } else if (nrCorecteSelectate > 0) {
+        text = `⚠️ Partial: ${nrCorecteSelectate} din ${totalCorecte} corecte, ${nrGresite} gresite selectate.`;
+        cls = 'partial';
+    } else {
+        text = `❌ Gresit. Nicio varianta corecta selectata${nrGresite > 0 ? ` (${nrGresite} gresite)` : ''}.`;
+        cls = 'bad';
+    }
+
+    if (expl) text += ' ' + expl;
+
+    fb.textContent = text;
+    fb.className = 'qp-inline-feedback show ' + cls;
+}
+
+function startQuizNow() {
+    document.getElementById('qp-intro').style.display = 'none';
+    document.getElementById('qp-main-content').style.display = 'block';
+    startTimer();
+}
+
+function startTimer() {
+    if (timeLeft <= 0) return;
+
+    timerInterval = setInterval(() => {
+        timeLeft--;
+
+        const display = document.getElementById('timer-val');
+        if (display) display.textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            finalizareFortata();
+        }
+    }, 1000);
+}
+
+function finalizareFortata() {
+    document.querySelectorAll('.qp-question-card').forEach(card => {
+        if (!card.dataset.answered && card.dataset.multiple === 'true') {
+            const sel = selectedMap[card.dataset.id];
+
+            if (sel && sel.size > 0) {
+                confirmMultipleChoice(parseInt(card.dataset.id));
+            }
+        }
+    });
+
+    document.querySelectorAll('.qp-option').forEach(b => {
+        b.disabled = true;
+        b.style.opacity = '0.5';
+        b.style.cursor = 'not-allowed';
+    });
+
+    Swal.fire({
+        title: '⌛ Timpul a expirat!',
+        text: 'Din pacate, sesiunea s-a incheiat. Hai sa vedem cum te-ai descurcat!',
+        icon: 'warning',
+        background: '#140800',
+        color: '#f5d78e',
+        confirmButtonColor: '#c84800',
+        confirmButtonText: 'Vezi scorul',
+        allowOutsideClick: false
+    }).then(result => {
+        if (result.isConfirmed) showResult();
+    });
+}
+
+function nextQuestion(currentIdx, total) {
+    const cards = document.querySelectorAll('.qp-question-card');
+
+    cards[currentIdx].classList.remove('active');
+
+    const nextIdx = currentIdx + 1;
+
+    if (nextIdx < total) {
+        cards[nextIdx].classList.add('active');
+        updateProgress(nextIdx, total);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        showResult();
+    }
+}
+
+function updateProgress(currentIdx, total) {
+    const pct = Math.round((currentIdx / total) * 100);
+
+    document.getElementById('progress-fill')?.style.setProperty('width', pct + '%');
+
+    const el = document.getElementById('progress-pct');
+    const lbl = document.getElementById('progress-label');
+
+    if (el) el.textContent = pct + '%';
+    if (lbl) lbl.textContent = 'Intrebarea ' + (currentIdx + 1) + ' din ' + total;
+}
+
+function showResult() {
+    if (timerInterval) clearInterval(timerInterval);
+
+    document.getElementById('qp-main-content').style.display = 'none';
+
+    document.querySelectorAll('.qp-question-card').forEach(card => {
+        if (!answeredMap[card.dataset.id]) {
+            answeredMap[card.dataset.id] = [];
+        }
+    });
+
+    const procent = punctajMaximTotal > 0
+        ? Math.round(punctajObtinutTotal / punctajMaximTotal * 100)
+        : 0;
+
+    const icon = procent >= 80 ? '🏆' : procent >= 50 ? '👍' : '💪';
+    const title = procent >= 80 ? 'Excelent!' : procent >= 50 ? 'Bine gândit!' : 'Mai incearcă!';
+
+    document.getElementById('res-icon').textContent = icon;
+    document.getElementById('res-title').textContent = title;
+    document.getElementById('res-score').textContent = `Scor: ${procent}%`;
+
+    const result = document.getElementById('qp-result');
+    result.classList.add('show');
+    result.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    fetch('?handler=SaveResult', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+        },
+        body: JSON.stringify({
+            quizId: @(quiz?.IdQuiz ?? 0),
+            raspunsuri: Object.entries(answeredMap).map(([idIntrebare, idVariante]) => ({
+                idIntrebare: parseInt(idIntrebare),
+                idVariante: idVariante || []
+            }))
+        })
+    })
+    .then(async response => {
+        const contentType = response.headers.get('content-type');
+
+        if (!contentType?.includes('application/json')) {
+            const text = await response.text();
+            console.error('Raspuns ne-JSON:', text);
+            throw new Error('Status: ' + response.status);
+        }
+
+        return response.json();
+    })
+    .then(data => {
+        if (data.nelogat) {
+            Swal.fire({
+                title: 'Felicitari pentru rezolvarea primului quiz!',
+                html: 'Creeaza un cont gratuit pentru a castiga <strong>XP</strong> si a-ti salva progresul!',
+                icon: 'info',
+                background: '#140800',
+                color: '#f5d78e',
+                confirmButtonColor: '#c84800',
+                confirmButtonText: 'Creeaza cont'
+            }).then(r => {
+                if (r.isConfirmed) {
+                    window.location.href = '/Cont/Logare-Inregistrare/Register';
+                }
+            });
+        } else if (data.success && data.xpAdded > 0) {
+            Swal.fire({
+                title: '⭐ XP Castigat!',
+                text: `Ai primit +${data.xpAdded} XP! Nivel curent: ${data.nivelNou}`,
+                icon: 'success',
+                background: '#140800',
+                color: '#f5d78e',
+                confirmButtonColor: '#c84800'
+            });
+        }
+    })
+    .catch(err => console.error('Eroare fetch:', err));
+}
+
+function retryQuiz() {
+    punctajObtinutTotal = 0;
+    timeLeft = timpInitial;
+
+    if (timerInterval) clearInterval(timerInterval);
+
+    document.querySelectorAll('.qp-question-card').forEach((card, i) => {
+        delete card.dataset.answered;
+
+        if (card.dataset.multiple === 'true') {
+            selectedMap[card.dataset.id] = new Set();
+            document.getElementById('confirm-' + card.dataset.id)?.classList.remove('visible');
+        }
+
+        card.querySelectorAll('.qp-option').forEach(btn => {
+            btn.classList.remove('correct', 'correct-miss', 'wrong', 'selected');
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        });
+
+        const fb = document.getElementById('fb-' + card.dataset.id);
+
+        if (fb) {
+            fb.className = 'qp-inline-feedback';
+            fb.textContent = '';
+        }
+
+        document.getElementById('next-' + i)?.classList.remove('visible');
+        card.classList.remove('active');
+    });
+
+    Object.keys(answeredMap).forEach(k => delete answeredMap[k]);
+
+    document.getElementById('qp-result').classList.remove('show');
+    document.getElementById('qp-main-content').style.display = 'block';
+
+    updateProgress(0, totalIntrebari);
+    document.querySelectorAll('.qp-question-card')[0]?.classList.add('active');
+
+    const display = document.getElementById('timer-val');
+    if (display) display.textContent = timeLeft;
+
+    startTimer();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+
+<style>
+.ember { position: absolute; border-radius: 50%; opacity: 0; }
+@@keyframes rise {
+    0%   { transform: translateY(0) translateX(0); opacity: 0; }
+    8%   { opacity: .8; }
+    85%  { opacity: .25; }
+    100% { transform: translateY(-100vh) translateX(var(--d)); opacity: 0; }
+}
+</style>

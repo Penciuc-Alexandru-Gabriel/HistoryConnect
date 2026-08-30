@@ -1,0 +1,368 @@
+@page "/Cont/Logare-Inregistrare/Login"
+@model HistoryConnect.Pages.Cont.LogareInregistrare.LoginModel
+@{
+    ViewData["Title"] = "Autentificare - HistoryConnect";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Autentificare - HistoryConnect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --fire-dark:   #110500;
+            --fire-mid:    #6B2800;
+            --fire-bright: #C85000;
+            --gold-light:  #F9EDB0;
+            --gold-mid:    #EED468;
+            --gold-dark:   #EACB50;
+            --ink:         #380C00;
+            --ink-mid:     #5A2200;
+            --ink-light:   #8A3400;
+            --border:      #5A2800;
+            --text-btn:    #FFE8A0;
+        }
+
+        body { font-family: 'IM Fell English', Georgia, serif; }
+
+        /* Fire background */
+        .fire-bg {
+            position: fixed; inset: 0; z-index: 0;
+            background:
+                radial-gradient(ellipse 65% 55% at 10% 110%, #8B3500 0%, transparent 55%),
+                radial-gradient(ellipse 65% 55% at 90% 110%, #7A2800 0%, transparent 55%),
+                radial-gradient(ellipse 45% 65% at 50% 110%, #B85000 0%, transparent 45%),
+                linear-gradient(180deg, #0a0200 0%, #160500 60%, #220800 100%);
+        }
+
+        /* Torch glows */
+        .torch { position: fixed; border-radius: 9999px; pointer-events: none; z-index: 1; animation: flk 3.2s ease-in-out infinite; }
+        .torch-l { width: clamp(180px,35vw,420px); height: clamp(180px,35vw,420px); background: radial-gradient(circle, #C85A00 0%, #601800 45%, transparent 70%); top:-12%; left:-8%; opacity:.5; }
+        .torch-r { width: clamp(180px,35vw,420px); height: clamp(180px,35vw,420px); background: radial-gradient(circle, #D06A00 0%, #6A1400 45%, transparent 70%); bottom:-12%; right:-8%; opacity:.45; animation-direction:reverse; animation-duration:2.9s; }
+        @@keyframes flk { 0%,100%{opacity:.5;transform:scale(1)} 33%{opacity:.7;transform:scale(1.05)} 66%{opacity:.4;transform:scale(.97)} }
+
+        /* Parchment card */
+        .parchment {
+            position: relative; overflow: hidden; border-radius: 10px;
+            background: linear-gradient(145deg, var(--gold-light) 0%, var(--gold-mid) 30%, #F6E695 65%, var(--gold-dark) 100%);
+            border: 3px solid var(--border);
+            animation: glow 4s ease-in-out infinite;
+        }
+        .parchment::before {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(90,44,0,.055) 30px, rgba(90,44,0,.055) 31px);
+        }
+        .parchment::after {
+            content: ''; position: absolute; inset: 8px; pointer-events: none;
+            border: 1px solid rgba(90,26,0,.25); border-radius: 7px;
+        }
+        @@keyframes glow {
+            0%,100% { box-shadow: 0 0 30px rgba(200,120,0,.55), 0 0 65px rgba(140,60,0,.35); }
+            50%      { box-shadow: 0 0 50px rgba(230,140,0,.65), 0 0 100px rgba(160,80,0,.45); }
+        }
+
+        /* Input field */
+        .inp {
+            width: 100%; padding: 10px 14px;
+            background: rgba(80,35,0,.10); border: 2px solid #8A4500; border-radius: 6px;
+            color: var(--ink); font-family: 'IM Fell English', serif; font-size: 14px;
+            transition: all .2s; outline: none;
+        }
+        .inp::placeholder { color: #9B6035; opacity: .75; }
+        .inp:focus { border-color: #C05800; background: rgba(255,225,150,.35); box-shadow: 0 0 0 3px rgba(180,80,0,.18); }
+
+    
+        .validation-summary-valid { display: none; }
+
+        .ember { position: absolute; border-radius: 50%; animation: rise linear infinite; opacity: 0; }
+        @@keyframes rise {
+            0%   { transform: translateY(0) translateX(0); opacity: 0; }
+            8%   { opacity: .9; }
+            85%  { opacity: .4; }
+            100% { transform: translateY(-95vh) translateX(var(--d)); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen overflow-x-hidden" style="background:var(--fire-dark);">
+
+    <div class="fire-bg"></div>
+    <div class="torch torch-l"></div>
+    <div class="torch torch-r"></div>
+    <div id="embers" class="fixed inset-0 overflow-hidden pointer-events-none" style="z-index:1;"></div>
+
+    @* Back to home button *@
+    <a href="/"
+       class="fixed top-4 left-4 z-50 rounded-full flex items-center justify-center no-underline transition-transform hover:scale-110"
+       style="width:50px;height:50px;background:linear-gradient(135deg,var(--fire-mid),var(--fire-bright));border:2px solid #FFAA40;box-shadow:0 4px 20px rgba(160,70,0,.6);">
+        <span class="font-bold" style="font-family:'Cinzel',serif;font-size:12px;color:var(--text-btn);">HC</span>
+    </a>
+
+    <div class="relative flex items-center justify-center min-h-screen py-20" style="z-index:10;padding-left:max(16px,5vw);padding-right:max(16px,5vw);">
+        <div style="width:90%;max-width:380px;">
+
+            @* Parchment card *@
+            <div class="parchment">
+                <span class="absolute top-2 left-2 text-xl" style="color:var(--fire-mid);">✦</span>
+                <span class="absolute top-2 right-2 text-xl" style="color:var(--fire-mid);">✦</span>
+                <span class="absolute bottom-2 left-2 text-xl" style="color:var(--fire-mid);">✦</span>
+                <span class="absolute bottom-2 right-2 text-xl" style="color:var(--fire-mid);">✦</span>
+
+                <div class="relative z-10" style="padding:clamp(20px,4vw,36px);">
+
+                    @* Header *@
+                    <div class="text-center mb-5">
+                        <div style="font-family:'Cinzel',serif;font-size:clamp(20px,4vw,30px);font-weight:900;color:#6A1A00;text-shadow:0 2px 6px rgba(0,0,0,.12);">
+                            ⚔️ HistoryConnect ⚔️
+                        </div>
+                        <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--ink-light);margin-top:4px;letter-spacing:.05em;">
+                            Autentificare
+                        </div>
+                    </div>
+
+                    <hr style="border:none;border-top:2px solid rgba(130,60,0,.4);margin-bottom:20px;">
+
+                    @if (Model.AfisareFormularParolaUitata)
+                    {
+                        <form method="post" asp-page-handler="TrimiteResetare" autocomplete="off" class="flex flex-col gap-4">
+                            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+
+                            <div asp-validation-summary="ModelOnly"
+                                 class="rounded-md p-[10px_14px] text-[13px] italic"
+                                 style="background:rgba(160,0,0,.12);border:2px solid #8B0000;color:#680000;"></div>
+
+                            @if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+                            {
+                                <div class="rounded-md p-[10px_14px] text-[13px] italic"
+                                     style="background:rgba(20,120,40,.14);border:2px solid #1F7A2E;color:#145020;">
+                                    @Model.SuccessMessage
+                                </div>
+                            }
+
+                            <div>
+                                <label asp-for="ForgotPasswordInput.Email"
+                                       class="block mb-[6px] font-semibold tracking-[.05em]"
+                                       style="font-family:'Cinzel',serif;font-size:11px;color:var(--ink-mid);">
+                                    Email
+                                </label>
+                                <input asp-for="ForgotPasswordInput.Email" class="inp" placeholder="adresa@email.com" autocomplete="off" />
+                                <span asp-validation-for="ForgotPasswordInput.Email" class="block mt-1 text-[11px] italic" style="color:#AA0000;"></span>
+                            </div>
+
+                            <button type="submit"
+                                    class="w-full py-3 px-5 rounded-md font-bold cursor-pointer transition-all duration-300 hover:-translate-y-px hover:shadow-[0_6px_32px_rgba(200,90,0,.7)] active:translate-y-0"
+                                    style="font-family:'Cinzel',serif;font-size:clamp(13px,2vw,15px);letter-spacing:.07em;
+                                           background:linear-gradient(135deg,var(--fire-mid) 0%,var(--fire-bright) 50%,var(--fire-mid) 100%) right;
+                                           background-size:200% auto; color:var(--text-btn);
+                                           border:2px solid #FFAA40;text-shadow:0 1px 4px rgba(0,0,0,.45);
+                                           box-shadow:0 4px 22px rgba(160,70,0,.5);">
+                                Trimite link resetare
+                            </button>
+
+                            <p class="text-center text-[13px] m-0" style="color:#6A3000;">
+                                <a href="/Cont/Logare-Inregistrare/Login"
+                                   class="font-bold no-underline" style="font-family:'Cinzel',serif;color:#B06000;">
+                                    Inapoi la autentificare
+                                </a>
+                            </p>
+                        </form>
+                    }
+                    else if (Model.AfisareFormularResetare)
+                    {
+                        <form method="post" asp-page-handler="ReseteazaParola" autocomplete="off" class="flex flex-col gap-4">
+                            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                            <input asp-for="ResetPasswordInput.Email" type="hidden" />
+                            <input asp-for="ResetPasswordInput.ResetCode" type="hidden" />
+
+                            <div asp-validation-summary="ModelOnly"
+                                 class="rounded-md p-[10px_14px] text-[13px] italic"
+                                 style="background:rgba(160,0,0,.12);border:2px solid #8B0000;color:#680000;"></div>
+
+                            @if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+                            {
+                                <div class="rounded-md p-[10px_14px] text-[13px] italic"
+                                     style="background:rgba(20,120,40,.14);border:2px solid #1F7A2E;color:#145020;">
+                                    @Model.SuccessMessage
+                                </div>
+                            }
+
+                            <p class="text-center text-[13px] m-0" style="color:#6A3000;">
+                                Seteaza o parola noua pentru @Model.ResetPasswordInput.Email
+                            </p>
+
+                            <div>
+                                <label asp-for="ResetPasswordInput.ParolaNoua"
+                                       class="block mb-[6px] font-semibold tracking-[.05em]"
+                                       style="font-family:'Cinzel',serif;font-size:11px;color:var(--ink-mid);">
+                                    Parola noua
+                                </label>
+                                <div class="relative">
+                                    <input asp-for="ResetPasswordInput.ParolaNoua" id="campParolaNoua" class="inp" type="password" placeholder="Minim 6 caractere" autocomplete="off" style="padding-right:40px;" />
+                                    <button type="button" onclick="toggleVizibil('campParolaNoua','ochiParolaNoua')"
+                                            class="absolute right-[10px] top-1/2 -translate-y-1/2 bg-transparent border-0 cursor-pointer p-0 leading-none"
+                                            style="color:var(--ink-light);" title="Arata/Ascunde parola">
+                                        <span id="ochiParolaNoua">👁</span>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="ResetPasswordInput.ParolaNoua" class="block mt-1 text-[11px] italic" style="color:#AA0000;"></span>
+                            </div>
+
+                            <div>
+                                <label asp-for="ResetPasswordInput.ConfirmaParolaNoua"
+                                       class="block mb-[6px] font-semibold tracking-[.05em]"
+                                       style="font-family:'Cinzel',serif;font-size:11px;color:var(--ink-mid);">
+                                    Confirma parola
+                                </label>
+                                <div class="relative">
+                                    <input asp-for="ResetPasswordInput.ConfirmaParolaNoua" id="campConfirmaParolaNoua" class="inp" type="password" placeholder="Repeta parola" autocomplete="off" style="padding-right:40px;" />
+                                    <button type="button" onclick="toggleVizibil('campConfirmaParolaNoua','ochiConfirmaParolaNoua')"
+                                            class="absolute right-[10px] top-1/2 -translate-y-1/2 bg-transparent border-0 cursor-pointer p-0 leading-none"
+                                            style="color:var(--ink-light);" title="Arata/Ascunde parola">
+                                        <span id="ochiConfirmaParolaNoua">👁</span>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="ResetPasswordInput.ConfirmaParolaNoua" class="block mt-1 text-[11px] italic" style="color:#AA0000;"></span>
+                            </div>
+
+                            <button type="submit"
+                                    class="w-full py-3 px-5 rounded-md font-bold cursor-pointer transition-all duration-300 hover:-translate-y-px hover:shadow-[0_6px_32px_rgba(200,90,0,.7)] active:translate-y-0"
+                                    style="font-family:'Cinzel',serif;font-size:clamp(13px,2vw,15px);letter-spacing:.07em;
+                                           background:linear-gradient(135deg,var(--fire-mid) 0%,var(--fire-bright) 50%,var(--fire-mid) 100%) right;
+                                           background-size:200% auto; color:var(--text-btn);
+                                           border:2px solid #FFAA40;text-shadow:0 1px 4px rgba(0,0,0,.45);
+                                           box-shadow:0 4px 22px rgba(160,70,0,.5);">
+                                Reseteaza parola
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                    @* Form *@
+                    <form method="post" autocomplete="off" class="flex flex-col gap-4">
+                        <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                        <div asp-validation-summary="ModelOnly"
+                             class="rounded-md p-[10px_14px] text-[13px] italic"
+                             style="background:rgba(160,0,0,.12);border:2px solid #8B0000;color:#680000;"></div>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+                        {
+                            <div class="rounded-md p-[10px_14px] text-[13px] italic"
+                                 style="background:rgba(20,120,40,.14);border:2px solid #1F7A2E;color:#145020;">
+                                @Model.SuccessMessage
+                            </div>
+                        }
+
+                        @* Email *@
+                        <div>
+                            <label asp-for="Input.Email"
+                                   class="block mb-[6px] font-semibold tracking-[.05em]"
+                                   style="font-family:'Cinzel',serif;font-size:11px;color:var(--ink-mid);">
+                                Email
+                            </label>
+                            <input asp-for="Input.Email" class="inp" placeholder="adresa@email.com" autocomplete="off" />
+                            <span asp-validation-for="Input.Email" class="block mt-1 text-[11px] italic" style="color:#AA0000;"></span>
+                        </div>
+
+                        @* Parola *@
+                        <div>
+                            <label asp-for="Input.Parola"
+                                   class="block mb-[6px] font-semibold tracking-[.05em]"
+                                   style="font-family:'Cinzel',serif;font-size:11px;color:var(--ink-mid);">
+                                Parola
+                            </label>
+                            <div class="relative">
+                                <input asp-for="Input.Parola" id="campParola" class="inp" type="password" placeholder="••••••••" autocomplete="off" style="padding-right:40px;" />
+                                <button type="button" onclick="toggleVizibil('campParola','ochiParola')"
+                                        class="absolute right-[10px] top-1/2 -translate-y-1/2 bg-transparent border-0 cursor-pointer p-0 leading-none"
+                                        style="color:var(--ink-light);" title="Arata/Ascunde parola">
+                                    <span id="ochiParola">👁</span>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Input.Parola" class="block mt-1 text-[11px] italic" style="color:#AA0000;"></span>
+                            <p class="mt-2 mb-0 text-right text-[12px]">
+                                <a href="/Cont/Logare-Inregistrare/Login?forgotPassword=true"
+                                   class="font-bold no-underline" style="font-family:'Cinzel',serif;color:#B06000;">
+                                    Ai uitat parola?
+                                </a>
+                            </p>
+                        </div>
+
+                        @* Remember me *@
+                        <label class="flex items-center gap-[10px] rounded-md px-[14px] py-[10px] cursor-pointer"
+                               style="background:rgba(80,35,0,.12);border:1.5px solid #8A4000;">
+                            <input asp-for="Input.TineMaMinte" type="checkbox" class="w-[15px] h-[15px] cursor-pointer" style="accent-color:#9B2200;" />
+                            <span style="font-family:'Cinzel',serif;font-size:11px;color:var(--ink-mid);">Tine-ma minte</span>
+                        </label>
+
+                        @* Submit *@
+                        <button type="submit"
+                                class="w-full py-3 px-5 rounded-md font-bold cursor-pointer transition-all duration-300 hover:-translate-y-px hover:shadow-[0_6px_32px_rgba(200,90,0,.7)] active:translate-y-0"
+                                style="font-family:'Cinzel',serif;font-size:clamp(13px,2vw,15px);letter-spacing:.07em;
+                                       background:linear-gradient(135deg,var(--fire-mid) 0%,var(--fire-bright) 50%,var(--fire-mid) 100%) right;
+                                       background-size:200% auto; color:var(--text-btn);
+                                       border:2px solid #FFAA40;text-shadow:0 1px 4px rgba(0,0,0,.45);
+                                       box-shadow:0 4px 22px rgba(160,70,0,.5);">
+                            Intra in cont
+                        </button>
+                    </form>
+                    }
+
+                    @* Divider *@
+                    <div class="flex items-center gap-3 my-5">
+                        <div class="flex-1 h-px" style="background:linear-gradient(to right,transparent,#8B5000,transparent);"></div>
+                        <span style="font-family:'Cinzel',serif;font-size:10px;color:#7A3500;letter-spacing:.1em;">SAU</span>
+                        <div class="flex-1 h-px" style="background:linear-gradient(to right,#8B5000,transparent);"></div>
+                    </div>
+
+                    <p class="text-center text-[13px] m-0" style="color:#6A3000;">
+                        Nu ai cont?
+                        <a href="/cont/logare-inregistrare/register"
+                           class="font-bold no-underline" style="font-family:'Cinzel',serif;color:#B06000;">
+                            Inregistreaza-te
+                        </a>
+                    </p>
+                </div>
+            </div>
+
+            @* Quote *@
+            <div class="mt-5 rounded-[10px] p-[20px_24px] text-center shadow-[0_0_22px_rgba(140,60,0,.4)]"
+                 style="background:linear-gradient(135deg,#180500,#2A0A00,#180500);border:2px solid var(--border);">
+                <p class="italic m-0 text-[12px] leading-[1.7]" style="color:#EDD090;">
+                    <span style="color:#FFB050;font-family:'Cinzel',serif;font-size:16px;">"</span>
+                    Un popor care nu-şi cunoaşte istoria e ca un copil care nu-şi cunoaşte părinţii.
+                    <span style="color:#FFB050;font-family:'Cinzel',serif;font-size:16px;">"</span>
+                </p>
+                <p class="mt-2 text-[10px] tracking-[.05em]" style="font-family:'Cinzel',serif;color:#B07840;">
+                    — Nicolae Iorga
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function toggleVizibil(campId, ochiId) {
+            const camp = document.getElementById(campId);
+            const ochi = document.getElementById(ochiId);
+            if (camp.type === 'password') { camp.type = 'text'; ochi.textContent = '🙈'; }
+            else                          { camp.type = 'password'; ochi.textContent = '👁'; }
+        }
+    </script>
+    <script>
+        const ec = document.getElementById('embers');
+        const clr = ['#FF6600','#FF9900','#FFBB00','#FF4400'];
+        for (let i = 0; i < 30; i++) {
+            const e = document.createElement('div');
+            e.className = 'ember';
+            const s = Math.random() * 4 + 2;
+            const c = clr[Math.floor(Math.random() * clr.length)];
+            e.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;bottom:-8px;background:${c};box-shadow:0 0 ${s*2}px ${c};animation-delay:${Math.random()*8}s;animation-duration:${Math.random()*5+7}s;--d:${(Math.random()-.5)*100}px`;
+            ec.appendChild(e);
+        }
+    </script>
+    <partial name="_ValidationScriptsPartial" />
+</body>
+</html>

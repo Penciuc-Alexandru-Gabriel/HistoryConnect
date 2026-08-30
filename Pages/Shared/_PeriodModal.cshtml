@@ -1,0 +1,187 @@
+@* ─── _PeriodModal.cshtml ─── *@
+@model HistoryConnect.Pages.IndexModel
+
+@* Minimal CSS for JS-toggled overlay open state + card pseudo-elements *@
+<style>
+    #modalOverlay           { display:none; }
+    #modalOverlay.open      { display:flex; }
+
+    /* Image zoom on hover (requires pseudo/class, not Tailwind alone) */
+    .period-card-new:hover .period-card-bg-img   { transform: scale(1.08); }
+    .period-card-new:hover .period-card-arrow     { color: var(--accent); transform: translateX(3px); }
+
+    /* Selected card golden tint */
+    .period-card-new.selected .period-card-gradient {
+        background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%,
+            color-mix(in srgb, var(--gold) 12%, rgba(0,0,0,0.4) 88%) 40%,
+            rgba(0,0,0,0.92) 100%);
+    }
+    .period-card-new.selected .period-card-glow {
+        background: radial-gradient(circle at 30% 40%,
+            color-mix(in srgb, var(--gold) 18%, transparent 82%) 0%, transparent 65%);
+    }
+    .period-card-new.selected .period-card-title { color: var(--gold); }
+
+    /* Years line pseudo-element */
+    .period-card-years::before {
+        content: ''; display: inline-block; width: 16px; height: 1px;
+        background: linear-gradient(90deg, var(--fire-mid), transparent);
+    }
+
+    /* Locked dim */
+    .period-card-locked         { filter: brightness(0.55); }
+    .period-card-locked:hover   { filter: brightness(0.7); border-color: var(--border-lesson-hover) !important; }
+</style>
+
+@* ── Modal overlay ── *@
+<div id="modalOverlay"
+     class="fixed inset-0 z-[2000] items-center justify-center p-5"
+     style="background:rgba(0,0,0,0.82); backdrop-filter:blur(6px);"
+     onclick="if(event.target===this)closeModal()">
+
+    @* Modal box *@
+    <div class="flex flex-col rounded-[20px] w-full max-w-[860px] max-h-[88vh] overflow-hidden
+                border border-(--fire-mid) transition-all duration-[400ms] shadow-[0_0_80px_var(--accent-soft),0_0_160px_rgba(0,0,0,0.3)]"
+         style="background:linear-gradient(160deg, var(--fire-dark) 0%, color-mix(in srgb, var(--fire-dark) 60%, var(--fire-mid) 40%) 60%, var(--bg-global) 100%);">
+
+        @* Header *@
+        <div class="flex items-center justify-between flex-shrink-0 px-7 py-6 border-b border-(--nav-border) transition-all duration-[400ms]"
+             style="background:linear-gradient(90deg, var(--accent-soft), transparent);">
+            <div>
+                <div class="flex items-center gap-[10px] font-black text-xl" style="font-family:'Cinzel',serif; color:var(--gold-pale);">
+                    🏰 Perioade Istorice
+                </div>
+                <div class="text-[11px] mt-1 transition-colors duration-[400ms]" style="font-family:'Cinzel',serif; color:var(--fire-bright);">
+                    Alege o perioadă pentru a explora istoria României
+                </div>
+            </div>
+            <button onclick="closeModal()"
+                    class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 cursor-pointer text-[18px] transition-all duration-200
+                           hover:bg-(--accent-soft) hover:text-(--accent) hover:border-(--accent)"
+                    style="background:rgba(255,255,255,0.05); border:1px solid var(--fire-mid); color:var(--fire-bright);">
+                ✕
+            </button>
+        </div>
+
+        @* Cards grid *@
+        <div class="overflow-y-auto p-[24px_28px_28px] grid gap-4"
+             style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));">
+
+            @{
+                var icoane = new[] { "⚔️", "🏛️", "👑", "🗡️", "🛡️", "📜", "🏰", "⚜️" };
+                int idx = 0;
+                var primaIdPerioada = Model.ToatePerioadele.FirstOrDefault()?.IdPerioada;
+            }
+
+            @foreach (var p in Model.ToatePerioadele)
+            {
+                bool eSelectata = Model.PerioadaSelectata?.IdPerioada == p.IdPerioada;
+                bool blocata = !Model.EsteLogat && p.IdPerioada != primaIdPerioada;
+                var icon = icoane[idx % icoane.Length]; idx++;
+                var nrCapitole = p.Capitole?.Count ?? 0;
+                var cardHref = blocata ? "?showPopup=true" : $"?period={p.IdPerioada}";
+
+                @* Card perioadă *@
+                <a href="@cardHref"
+                   class="period-card-new @(eSelectata ? "selected" : "") @(blocata ? "period-card-locked" : "")
+                          relative flex flex-col rounded-[14px] overflow-hidden no-underline cursor-pointer
+                          min-h-[260px] transition-all duration-[250ms] hover:-translate-y-[3px] hover:shadow-[0_8px_28px_var(--accent-soft)]
+                          @(eSelectata ? "shadow-[0_0_0_1px_var(--gold),0_8px_28px_var(--accent-soft)]" : "")"
+                   style="border:1.5px solid @(eSelectata ? "var(--gold)" : "var(--border-lesson)");
+                          background:var(--bg-lesson);">
+
+                    @* Background image *@
+                    @if (!string.IsNullOrEmpty(p.UrlImagine))
+                    {
+                        <img src="@p.UrlImagine" class="period-card-bg-img absolute top-0 left-0 w-full h-full object-cover object-top z-0 transition-transform duration-[400ms]"
+                             alt="" loading="lazy" />
+                    }
+
+                    @* Gradient overlay *@
+                    <div class="period-card-gradient absolute inset-0 z-[1] transition-[background] duration-[400ms]"
+                         style="background:linear-gradient(180deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0.88) 100%);"></div>
+
+                    @* Glow overlay *@
+                    <div class="period-card-glow absolute inset-0 z-[2] pointer-events-none transition-[background] duration-[400ms]"
+                         style="background:radial-gradient(circle at 30% 40%, var(--accent-soft) 0%, transparent 65%);"></div>
+
+                    @* Icon *@
+                    <div class="absolute top-[14px] left-4 z-[4] text-[28px] leading-none"
+                         style="filter:drop-shadow(0 2px 8px rgba(0,0,0,0.9));">
+                        @(blocata ? "🔒" : icon)
+                    </div>
+
+                    @* Badge *@
+                    @if (eSelectata)
+                    {
+                        <div class="absolute top-3 right-3 z-[4] rounded-[20px] px-2 py-[2px] text-[9px] backdrop-blur-sm transition-all duration-[400ms]"
+                             style="font-family:'Cinzel',serif; background:var(--badge-bg); color:var(--badge-text); border:1px solid var(--badge-border);">
+                            ✓ Selectată
+                        </div>
+                    }
+                    else if (blocata)
+                    {
+                        <div class="absolute top-3 right-3 z-[4] rounded-[20px] px-2 py-[2px] text-[9px] backdrop-blur-sm"
+                             style="font-family:'Cinzel',serif; background:rgba(0,0,0,0.45); color:#6A4020; border:1px solid rgba(100,50,0,0.3);">
+                            🔒 Cont necesar
+                        </div>
+                    }
+
+                    @* Text content *@
+                    <div class="relative z-[3] flex-1 flex flex-col justify-end gap-[5px] p-[14px_18px_16px] box-border">
+                        <div class="period-card-title font-bold leading-[1.3]"
+                             style="font-family:'Cinzel',serif; font-size:14px; color:var(--gold-pale);
+                                    text-shadow:0 1px 6px rgba(0,0,0,0.9); @(blocata ? "opacity:.45" : "")">
+                            @p.Nume
+                        </div>
+                        <div class="period-card-years flex items-center gap-[5px] text-[11px] transition-colors duration-[400ms]"
+                             style="font-family:'Cinzel',serif; color:var(--fire-bright);">
+                            @p.Inceput — @p.Sfarsit
+                        </div>
+                        @if (!string.IsNullOrEmpty(p.Descriere))
+                        {
+                            <div class="text-[11px] leading-[1.5] mt-[2px] overflow-hidden"
+                                 style="color:rgba(220,180,140,0.85); text-shadow:0 1px 4px rgba(0,0,0,0.9);
+                                        display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+                                        @(blocata ? "opacity:.4" : "")">
+                                @p.Descriere
+                            </div>
+                        }
+                        <div class="flex items-center justify-between mt-2 pt-2 border-t border-[rgba(255,255,255,0.12)]">
+                            <span class="text-[10px] tracking-[.03em]"
+                                  style="font-family:'Cinzel',serif; color:rgba(255,210,140,0.8);">
+                                @if (nrCapitole > 0) { <text>@nrCapitole capitole</text> }
+                            </span>
+                            <span class="period-card-arrow text-[14px] transition-all duration-200"
+                                  style="color:rgba(255,180,80,0.85);">›</span>
+                        </div>
+                    </div>
+                </a>
+            }
+
+        </div>
+    </div>
+</div>
+
+<script>
+function openModal() {
+    document.getElementById('modalOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+});
+
+(function () {
+    const cat = new URLSearchParams(window.location.search).get('category');
+    if (!cat || cat === 'istorie') return;
+    document.querySelectorAll('.period-card-new:not(.period-card-locked)').forEach(function (card) {
+        const href = card.getAttribute('href');
+        if (href) card.setAttribute('href', href + '&category=' + cat);
+    });
+})();
+</script>

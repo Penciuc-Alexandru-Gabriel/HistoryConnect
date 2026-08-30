@@ -1,0 +1,683 @@
+﻿@page "/Admin/Utilizatori"
+@model HistoryConnect.Pages.Admin.Utilizatori.UtilizatoriIndexModel
+@{
+    ViewData["Title"] = "Gestionare Utilizatori";
+    var totalAdmini = Model.Utilizatori.Count(u => u.Rol == "Administrator");
+    var totalStudenti = Model.Utilizatori.Count(u => u.Rol == "Student");
+    var totalXp = Model.Utilizatori.Where(u => u.Rol == "Student").Sum(u => u.XpTotal);
+}
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@@400;600;700;900&family=Crimson+Pro:ital,wght@@0,300;0,400;1,300&display=swap');
+
+    .admin-util-page {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #080200 0%, #120600 40%, #0a0300 100%);
+        padding: 2rem 1rem 4rem;
+        font-family: 'Crimson Pro', Georgia, serif;
+    }
+
+    /* ── Stat cards ── */
+    .stat-card {
+        background: linear-gradient(135deg, rgba(20,8,0,.9), rgba(35,12,0,.85));
+        border: 1px solid rgba(180,80,0,.25);
+        border-radius: 14px;
+        padding: 1.4rem 1.6rem;
+        position: relative;
+        overflow: hidden;
+        transition: transform .25s, border-color .25s, box-shadow .25s;
+        backdrop-filter: blur(10px);
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: var(--card-accent, linear-gradient(90deg, #8B3000, #FF6020));
+        border-radius: 14px 14px 0 0;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(200,100,0,.4);
+        box-shadow: 0 12px 40px rgba(0,0,0,.5), 0 0 30px rgba(180,80,0,.1);
+    }
+    .stat-value {
+        font-family: 'Cinzel', serif;
+        font-size: 2.4rem;
+        font-weight: 900;
+        line-height: 1;
+        margin-bottom: .3rem;
+    }
+    .stat-label {
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .12em;
+        color: #906040;
+    }
+
+    /* ── Search bar ── */
+    .search-card {
+        background: linear-gradient(135deg, rgba(18,7,0,.95), rgba(28,10,0,.9));
+        border: 1px solid rgba(160,70,0,.3);
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        backdrop-filter: blur(12px);
+    }
+    .search-input {
+        background: rgba(255,255,255,.04);
+        border: 1px solid rgba(160,70,0,.35);
+        border-radius: 9px;
+        padding: .6rem 1rem;
+        color: #FFE898;
+        font-family: 'Crimson Pro', serif;
+        font-size: 1rem;
+        width: 100%;
+        transition: border-color .2s, box-shadow .2s;
+        outline: none;
+    }
+    .search-input::placeholder { color: #604030; }
+    .search-input:focus {
+        border-color: rgba(255,112,48,.6);
+        box-shadow: 0 0 0 3px rgba(255,112,48,.08);
+    }
+    .search-select {
+        background: rgba(255,255,255,.04);
+        border: 1px solid rgba(160,70,0,.35);
+        border-radius: 9px;
+        padding: .6rem 1rem;
+        color: #FFE898;
+        font-family: 'Crimson Pro', serif;
+        font-size: 1rem;
+        outline: none;
+        cursor: pointer;
+    }
+    .search-select option { background: #1a0800; }
+
+    /* ── Table ── */
+    .users-table-wrap {
+        background: linear-gradient(135deg, rgba(18,7,0,.95), rgba(28,10,0,.9));
+        border: 1px solid rgba(160,70,0,.25);
+        border-radius: 16px;
+        overflow: hidden;
+        backdrop-filter: blur(12px);
+    }
+    .users-table { width: 100%; border-collapse: collapse; border-color: transparent; }
+    .users-table thead {
+        background: rgba(180,70,0,.12);
+        border-bottom: 1px solid rgba(180,70,0,.3);
+    }
+    .users-table th { border-color: rgba(180,70,0,.3);
+        font-family: 'Cinzel', serif;
+        font-size: .7rem;
+        font-weight: 600;
+        letter-spacing: .1em;
+        color: #906040;
+        padding: .9rem 1.1rem;
+        text-transform: uppercase;
+    }
+    .users-table td {
+        padding: .85rem 1.1rem;
+        border-bottom: 1px solid rgba(140,55,0,.12);
+        vertical-align: middle;
+        color: #C4A880;
+    }
+    .users-table tbody tr {
+        transition: background .18s;
+    }
+    .users-table tbody tr:hover {
+        background: rgba(200,80,0,.07);
+    }
+    .users-table tbody tr:last-child td { border-bottom: none; }
+
+    /* ── Rând admin protejat ── */
+    .users-table tbody tr.row-admin-protected {
+        background: rgba(80,30,80,.04);
+    }
+    .users-table tbody tr.row-admin-protected:hover {
+        background: rgba(120,40,160,.06);
+    }
+
+    /* ── Avatar ── */
+    .user-avatar {
+        width: 38px; height: 38px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Cinzel', serif;
+        font-size: .95rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        position: relative;
+    }
+    .avatar-admin {
+        background: linear-gradient(135deg, #4B1070, #9B40CC);
+        border: 2px solid rgba(160,80,220,.5);
+        box-shadow: 0 0 12px rgba(150,60,200,.3);
+        color: #E8C8FF;
+    }
+    .avatar-student {
+        background: linear-gradient(135deg, #7A3A00, #D06010);
+        border: 2px solid rgba(210,100,20,.4);
+        box-shadow: 0 0 12px rgba(210,100,20,.2);
+        color: #FFE898;
+    }
+
+    /* ── Role badge ── */
+    .role-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: .28rem .75rem;
+        border-radius: 20px;
+        font-family: 'Cinzel', serif;
+        font-size: .65rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+    }
+    .role-admin {
+        background: rgba(140,40,200,.15);
+        border: 1px solid rgba(160,60,220,.35);
+        color: #D090FF;
+    }
+    .role-student {
+        background: rgba(200,100,20,.15);
+        border: 1px solid rgba(210,120,30,.35);
+        color: #FFCC70;
+    }
+
+    /* ── XP bar ── */
+    .xp-bar-wrap {
+        height: 4px;
+        background: rgba(255,255,255,.06);
+        border-radius: 99px;
+        overflow: hidden;
+        margin-top: 4px;
+        width: 80px;
+    }
+    .xp-bar-fill {
+        height: 100%;
+        border-radius: 99px;
+        background: linear-gradient(90deg, #8B2000, #FF6020, #FFB040);
+    }
+
+    /* ── Action buttons ── */
+    .act-btn {
+        font-size: .7rem;
+        font-family: 'Cinzel', serif;
+        font-weight: 600;
+        padding: .32rem .75rem;
+        border-radius: 7px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: all .18s;
+        white-space: nowrap;
+        letter-spacing: .04em;
+    }
+    .btn-promote {
+        background: rgba(140,40,200,.15);
+        border-color: rgba(150,50,210,.35);
+        color: #D090FF;
+    }
+    .btn-promote:hover {
+        background: rgba(140,40,200,.28);
+        border-color: rgba(170,70,230,.6);
+        box-shadow: 0 0 14px rgba(150,50,210,.25);
+    }
+    .btn-delete {
+        background: rgba(200,30,30,.12);
+        border-color: rgba(200,40,40,.3);
+        color: #FF9090;
+    }
+    .btn-delete:hover {
+        background: rgba(200,30,30,.25);
+        border-color: rgba(220,50,50,.55);
+        box-shadow: 0 0 14px rgba(200,30,30,.2);
+    }
+    .btn-refuse {
+        background: rgba(150,80,0,.13);
+        border-color: rgba(210,130,30,.35);
+        color: #FFC878;
+    }
+    .btn-refuse:hover {
+        background: rgba(160,90,0,.26);
+        border-color: rgba(230,150,45,.55);
+        box-shadow: 0 0 14px rgba(210,130,30,.2);
+    }
+
+    .act-btn:disabled {
+        opacity: .45;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+    }
+    .act-btn:disabled:hover {
+        box-shadow: none;
+        transform: none;
+    }
+    .badge-aprobare {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: .25rem .65rem;
+        border-radius: 8px;
+        font-family: 'Cinzel', serif;
+        font-size: .62rem;
+        font-weight: 600;
+        letter-spacing: .05em;
+        cursor: default;
+        user-select: none;
+    }
+    .badge-promovare {
+        background: rgba(140,40,200,.12);
+        border: 1px solid rgba(160,60,220,.28);
+        color: #C58AFF;
+    }
+    .badge-stergere {
+        background: rgba(200,30,30,.11);
+        border: 1px solid rgba(220,50,50,.25);
+        color: #FF9A9A;
+    }
+
+    /* ── Badge protejat / cont propriu ── */
+    .badge-protejat {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: .25rem .65rem;
+        border-radius: 8px;
+        font-family: 'Cinzel', serif;
+        font-size: .62rem;
+        font-weight: 600;
+        letter-spacing: .05em;
+        background: rgba(100,30,140,.08);
+        border: 1px solid rgba(120,40,160,.18);
+        color: #6A3A8A;
+        cursor: default;
+        user-select: none;
+    }
+    .badge-cont-propriu {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: .25rem .65rem;
+        border-radius: 8px;
+        font-family: 'Cinzel', serif;
+        font-size: .62rem;
+        font-weight: 600;
+        letter-spacing: .05em;
+        background: rgba(30,80,30,.08);
+        border: 1px solid rgba(60,120,60,.18);
+        color: #3A6A3A;
+        cursor: default;
+        user-select: none;
+    }
+
+    /* ── Filter btn ── */
+    .filter-btn {
+        background: linear-gradient(135deg, #8B3000, #D05010);
+        color: #FFE898;
+        border: none;
+        border-radius: 9px;
+        padding: .65rem 1.4rem;
+        font-family: 'Cinzel', serif;
+        font-size: .75rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        cursor: pointer;
+        transition: all .2s;
+        white-space: nowrap;
+    }
+    .filter-btn:hover {
+        background: linear-gradient(135deg, #A03800, #E06018);
+        box-shadow: 0 4px 20px rgba(200,80,20,.4);
+        transform: translateY(-1px);
+    }
+
+    /* ── Toast messages ── */
+    .toast-success {
+        background: linear-gradient(135deg, rgba(20,50,20,.9), rgba(30,60,20,.9));
+        border: 1px solid rgba(60,160,60,.35);
+        border-left: 4px solid #40C040;
+        color: #90E890;
+        border-radius: 10px;
+        padding: .85rem 1.1rem;
+        display: flex; align-items: center; gap: .6rem;
+        font-size: .95rem;
+    }
+    .toast-error {
+        background: linear-gradient(135deg, rgba(50,10,10,.9), rgba(60,15,15,.9));
+        border: 1px solid rgba(200,40,40,.35);
+        border-left: 4px solid #E04040;
+        color: #FF9090;
+        border-radius: 10px;
+        padding: .85rem 1.1rem;
+        display: flex; align-items: center; gap: .6rem;
+        font-size: .95rem;
+    }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb-link {
+        font-family: 'Cinzel', serif;
+        font-size: .72rem;
+        color: #604030;
+        text-decoration: none;
+        letter-spacing: .08em;
+        transition: color .2s;
+    }
+    .breadcrumb-link:hover { color: #FF7030; }
+
+    /* ── Empty state ── */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #604030;
+    }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; opacity: .5; }
+
+    /* ── Decorative separator ── */
+    .gold-sep {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(180,80,0,.4), transparent);
+        margin: .5rem 0;
+    }
+</style>
+
+<div class="admin-util-page">
+<div style="max-width:1280px; margin:0 auto;">
+
+    @* ── Breadcrumb & Title ── *@
+    <div style="margin-bottom:2rem;">
+        <a href="/Admin" class="breadcrumb-link">← Dashboard</a>
+        <div style="margin-top:.5rem; display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:.5rem;">
+            <h1 style="font-family:'Cinzel',serif; font-size:clamp(1.4rem,3vw,2rem); font-weight:900; color:#FFE898; margin:0; text-shadow:0 2px 20px rgba(200,80,0,.3);">
+                ⚔️ Gestionare Utilizatori
+            </h1>
+            <span style="font-family:'Cinzel',serif; font-size:.72rem; color:#604030; letter-spacing:.1em; text-transform:uppercase;">
+                @Model.Utilizatori.Count utilizatori afișați
+            </span>
+        </div>
+        <div class="gold-sep" style="margin-top:.75rem;"></div>
+    </div>
+
+    @* ── Stat cards ── *@
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin-bottom:1.75rem;">
+        <div class="stat-card" style="--card-accent: linear-gradient(90deg,#4B1070,#9B40CC);">
+            <div class="stat-value" style="color:#D090FF;">@totalAdmini</div>
+            <div class="stat-label">👑 Administratori</div>
+        </div>
+        <div class="stat-card" style="--card-accent: linear-gradient(90deg,#8B3000,#FF6020);">
+            <div class="stat-value" style="color:#FFB860;">@totalStudenti</div>
+            <div class="stat-label">🎓 Studenți</div>
+        </div>
+        <div class="stat-card" style="--card-accent: linear-gradient(90deg,#1A4A8B,#2080D0);">
+            <div class="stat-value" style="color:#90C8FF; font-size:1.9rem;">@totalXp.ToString("N0")</div>
+            <div class="stat-label">⚡ XP Total acumulat</div>
+        </div>
+        <div class="stat-card" style="--card-accent: linear-gradient(90deg,#4A6800,#88BB00);">
+            <div class="stat-value" style="color:#CCEE80;">
+                @(totalStudenti > 0 ? (totalXp / totalStudenti).ToString("N0") : "0")
+            </div>
+            <div class="stat-label">📊 XP mediu / student</div>
+        </div>
+    </div>
+
+    @* ── Mesaje ── *@
+    @if (TempData["Mesaj"] != null)
+    {
+        <div class="toast-success" style="margin-bottom:1rem;">
+            <span>✅</span> @TempData["Mesaj"]
+        </div>
+    }
+    @if (TempData["MesajEroare"] != null)
+    {
+        <div class="toast-error" style="margin-bottom:1rem;">
+            <span>❌</span> @TempData["MesajEroare"]
+        </div>
+    }
+
+    @* ── Search & Filter ── *@
+    <div class="search-card" style="margin-bottom:1.5rem;">
+        <form method="get" style="display:flex; flex-wrap:wrap; gap:.75rem; align-items:flex-end;">
+            <div style="flex:1; min-width:220px;">
+                <label style="display:block; font-family:'Cinzel',serif; font-size:.65rem; color:#906040; letter-spacing:.1em; text-transform:uppercase; margin-bottom:.4rem;">
+                    Caută utilizator
+                </label>
+                <input type="text" name="Cautare" value="@Model.Cautare"
+                       placeholder="Nume, username sau email..."
+                       class="search-input" />
+            </div>
+            <div style="min-width:160px;">
+                <label style="display:block; font-family:'Cinzel',serif; font-size:.65rem; color:#906040; letter-spacing:.1em; text-transform:uppercase; margin-bottom:.4rem;">
+                    Rol
+                </label>
+                <select name="FiltruRol" class="search-select" style="width:100%;">
+                    @if (string.IsNullOrEmpty(Model.FiltruRol))
+                    {
+                        <option value="" selected>Toate rolurile</option>
+                    }
+                    else
+                    {
+                        <option value="">Toate rolurile</option>
+                    }
+                    @if (Model.FiltruRol == "Student")
+                    {
+                        <option value="Student" selected>🎓 Student</option>
+                    }
+                    else
+                    {
+                        <option value="Student">🎓 Student</option>
+                    }
+                    @if (Model.FiltruRol == "Administrator")
+                    {
+                        <option value="Administrator" selected>👑 Administrator</option>
+                    }
+                    else
+                    {
+                        <option value="Administrator">👑 Administrator</option>
+                    }
+                </select>
+            </div>
+            <div style="display:flex; gap:.6rem; align-items:center;">
+                <button type="submit" class="filter-btn">🔍 Filtrează</button>
+                @if (!string.IsNullOrEmpty(Model.Cautare) || !string.IsNullOrEmpty(Model.FiltruRol))
+                {
+                    <a href="/Admin/Utilizatori"
+                       style="font-family:'Cinzel',serif; font-size:.7rem; color:#604030; text-decoration:none; letter-spacing:.06em; transition:color .2s;"
+                       onmouseover="this.style.color='#FF7030'" onmouseout="this.style.color='#604030'">
+                        ✕ Resetează
+                    </a>
+                }
+            </div>
+        </form>
+    </div>
+
+    @* ── Tabel utilizatori ── *@
+    @if (!Model.Utilizatori.Any())
+    {
+        <div class="users-table-wrap">
+            <div class="empty-state">
+                <div class="icon">🔍</div>
+                <p style="font-family:'Cinzel',serif; font-size:.9rem; letter-spacing:.06em;">Niciun utilizator găsit.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="users-table-wrap">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;">Utilizator</th>
+                        <th style="text-align:left;">Email</th>
+                        <th style="text-align:center;">Rol</th>
+                        <th style="text-align:center;">XP & Nivel</th>
+                        <th style="text-align:center;">Creat la</th>
+                        <th style="text-align:right; padding-right:1.4rem;">Acțiuni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model.Utilizatori)
+                    {
+                        @* Rândurile de admin primesc o clasă specială pentru stil *@
+                        <tr class="@(u.Rol == "Administrator" ? "row-admin-protected" : "")">
+
+                            @* Avatar + Nume *@
+                            <td>
+                                <div style="display:flex; align-items:center; gap:.75rem;">
+                                    <div class="user-avatar @(u.Rol == "Administrator" ? "avatar-admin" : "avatar-student")">
+                                        @u.Nume.Substring(0, 1).ToUpper()
+                                    </div>
+                                    <div>
+                                        <div style="font-family:'Cinzel',serif; font-size:.85rem; color:#FFE898; font-weight:600;">@u.Nume</div>
+                                        <div style="font-size:.78rem; color:#604030; margin-top:1px;">@@@u.NumeUtilizator</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            @* Email *@
+                            <td style="font-size:.88rem; color:#A08060;">@u.Email</td>
+
+                            @* Rol badge *@
+                            <td style="text-align:center;">
+                                @if (u.Rol == "Administrator")
+                                {
+                                    <span class="role-badge role-admin">👑 Admin</span>
+                                }
+                                else
+                                {
+                                    <span class="role-badge role-student">🎓 Student</span>
+                                }
+                            </td>
+
+                            @* XP & Nivel *@
+                            <td style="text-align:center;">
+                                @if (u.Rol == "Student")
+                                {
+                                    <div style="font-family:'Cinzel',serif; font-size:.85rem; color:#FFCC70; font-weight:700;">@u.XpTotal.ToString("N0") XP</div>
+                                    <div style="font-size:.72rem; color:#806040; margin-top:2px;">Nivel @u.NivelCurent</div>
+                                    <div class="xp-bar-wrap" style="margin:5px auto 0;">
+                                        <div class="xp-bar-fill" style="width:@(Math.Min(100, u.NivelCurent * 10))%;"></div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span style="color:#3A2010; font-size:.8rem;">—</span>
+                                }
+                            </td>
+
+                            @* Data creare cont *@
+                            <td style="text-align:center;">
+                                <div style="font-family:'Cinzel',serif; font-size:.78rem; color:#C8A070; font-weight:600;">
+                                    @u.DataInregistrare.ToLocalTime().ToString("dd.MM.yyyy")
+                                </div>
+                                <div style="font-size:.7rem; color:#604030; margin-top:2px;">
+                                    @u.DataInregistrare.ToLocalTime().ToString("HH:mm")
+                                </div>
+                            </td>
+
+                            @* ── Acțiuni ── *@
+                            <td style="text-align:right;">
+                                <div style="display:flex; align-items:center; justify-content:flex-end; gap:.4rem; flex-wrap:wrap;">
+
+                                    @if (u.Id == Model.CurrentUserId)
+                                    {
+                                        @* Contul propriu al adminului autentificat – nicio acțiune permisă *@
+                                        <span class="badge-cont-propriu">🛡️ Cont propriu</span>
+                                    }
+                                    else if (u.Rol == "Administrator")
+                                    {
+                                        @* Alt cont de administrator – protejat, nicio acțiune destructivă *@
+                                        <span class="badge-protejat">🔒 Protejat</span>
+                                    }
+                                    else
+                                    {
+                                        @* Student - actiunile sensibile cer confirmarea unui alt administrator *@
+                                        var promovarePornitaDeMine = u.AprobarePromovareInitiataDeId == Model.CurrentUserId;
+                                        var stergerePornitaDeMine = u.AprobareStergereInitiataDeId == Model.CurrentUserId;
+                                        var textButonPromovare = u.AreAprobarePromovareInAsteptare
+                                            ? (promovarePornitaDeMine ? "In asteptare" : "Confirma promovarea")
+                                            : "Cere promovare";
+                                        var textButonStergere = u.AreAprobareStergereInAsteptare
+                                            ? (stergerePornitaDeMine ? "In asteptare" : "Confirma stergerea")
+                                            : "Cere stergere";
+                                        var confirmPromovare = u.AreAprobarePromovareInAsteptare
+                                            ? $"Confirma promovarea lui '{u.Nume}' la Administrator? Actiunea va fi executata acum."
+                                            : $"Ceri promovarea lui '{u.Nume}' la Administrator? Un alt administrator va trebui sa confirme.";
+                                        var confirmStergere = u.AreAprobareStergereInAsteptare
+                                            ? $"Confirma stergerea definitiva a contului lui '{u.Nume}'? Actiunea este ireversibila."
+                                            : $"Ceri stergerea contului lui '{u.Nume}'? Un alt administrator va trebui sa confirme.";
+                                        var textRefuzPromovare = promovarePornitaDeMine ? "Anuleaza promovarea" : "Refuza promovarea";
+                                        var textRefuzStergere = stergerePornitaDeMine ? "Anuleaza stergerea" : "Refuza stergerea";
+                                        var confirmRefuzPromovare = promovarePornitaDeMine
+                                            ? $"Anulezi cererea de promovare pentru '{u.Nume}'?"
+                                            : $"Refuzi cererea de promovare pentru '{u.Nume}'?";
+                                        var confirmRefuzStergere = stergerePornitaDeMine
+                                            ? $"Anulezi cererea de stergere pentru '{u.Nume}'?"
+                                            : $"Refuzi cererea de stergere pentru '{u.Nume}'?";
+
+                                        @if (u.AreAprobarePromovareInAsteptare)
+                                        {
+                                            <span class="badge-aprobare badge-promovare">Promovare: @u.AprobarePromovareInitiataDe</span>
+                                        }
+                                        @if (u.AreAprobareStergereInAsteptare)
+                                        {
+                                            <span class="badge-aprobare badge-stergere">Stergere: @u.AprobareStergereInitiataDe</span>
+                                        }
+
+                                        @* Promovare la Administrator *@
+                                        <form method="post" asp-page-handler="SchimbaRol" style="display:inline;"
+                                              onsubmit="return confirm(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(confirmPromovare)))">
+                                            <input type="hidden" name="idUtilizator" value="@u.Id" />
+                                            <button type="submit" class="act-btn btn-promote" disabled="@promovarePornitaDeMine">
+                                                @textButonPromovare
+                                            </button>
+                                        </form>
+                                        @if (u.AreAprobarePromovareInAsteptare)
+                                        {
+                                            <form method="post" asp-page-handler="RefuzaAprobare" style="display:inline;"
+                                                  onsubmit="return confirm(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(confirmRefuzPromovare)))">
+                                                <input type="hidden" name="idUtilizator" value="@u.Id" />
+                                                <input type="hidden" name="actiune" value="promovare" />
+                                                <button type="submit" class="act-btn btn-refuse">
+                                                    @textRefuzPromovare
+                                                </button>
+                                            </form>
+                                        }
+
+                                        @* Stergere *@
+                                        <form method="post" asp-page-handler="Sterge" style="display:inline;"
+                                              onsubmit="return confirm(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(confirmStergere)))">
+                                            <input type="hidden" name="idUtilizator" value="@u.Id" />
+                                            <button type="submit" class="act-btn btn-delete" disabled="@stergerePornitaDeMine">
+                                                @textButonStergere
+                                            </button>
+                                        </form>
+                                        @if (u.AreAprobareStergereInAsteptare)
+                                        {
+                                            <form method="post" asp-page-handler="RefuzaAprobare" style="display:inline;"
+                                                  onsubmit="return confirm(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(confirmRefuzStergere)))">
+                                                <input type="hidden" name="idUtilizator" value="@u.Id" />
+                                                <input type="hidden" name="actiune" value="stergere" />
+                                                <button type="submit" class="act-btn btn-refuse">
+                                                    @textRefuzStergere
+                                                </button>
+                                            </form>
+                                        }
+                                    }
+
+                                </div>
+                            </td>
+
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @* ── Footer stats ── *@
+        <div style="margin-top:1.25rem; display:flex; gap:2rem; flex-wrap:wrap;">
+            <span style="font-family:'Cinzel',serif; font-size:.72rem; color:#604030; letter-spacing:.08em;">
+                👑 <span style="color:#D090FF; font-weight:700;">@totalAdmini</span> Administratori
+            </span>
+            <span style="font-family:'Cinzel',serif; font-size:.72rem; color:#604030; letter-spacing:.08em;">
+                🎓 <span style="color:#FFCC70; font-weight:700;">@totalStudenti</span> Studenți
+            </span>
+            <span style="font-family:'Cinzel',serif; font-size:.72rem; color:#604030; letter-spacing:.08em;">
+                ⚡ <span style="color:#90C8FF; font-weight:700;">@totalXp.ToString("N0")</span> XP total
+            </span>
+        </div>
+    }
+
+</div>
+</div>

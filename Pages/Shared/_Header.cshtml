@@ -1,0 +1,106 @@
+@using Microsoft.AspNetCore.Identity
+@using HistoryConnect.Models
+@using HistoryConnect.Data
+@using Microsoft.EntityFrameworkCore
+@inject UserManager<Utilizator> UserManager
+@inject AppDbContext Db
+
+@{
+    Utilizator? utilizator = null;
+    string? urlAvatar = null;
+    string initiala = "?";
+
+    if (User.Identity?.IsAuthenticated ?? false)
+    {
+        var userId = UserManager.GetUserId(User);
+        utilizator = await Db.Users
+            .Include(u => u.Avatar)
+            .FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+        urlAvatar = utilizator?.Avatar?.UrlPoza;
+        initiala = utilizator?.Nume?.Substring(0, 1).ToUpper() ?? "?";
+    }
+}
+
+<header class="sticky top-0 z-[1000] border-b-2 border-(--fire-mid) shadow-[0_3px_18px_rgba(0,0,0,.5)] transition-[background] duration-[400ms]"
+        style="background:var(--bg-header); display:flex; justify-content:space-between; align-items:center; padding:0 40px; height:70px;">
+
+    <div class="flex justify-between items-center w-[95%] max-w-[1800px] mx-auto">
+
+        @{
+            var periodParam = Context.Request.Query["period"].ToString();
+            var homeUrl = string.IsNullOrEmpty(periodParam) ? "/" : $"/?period={periodParam}";
+        }
+
+        @* Logo *@
+        <a href="@homeUrl" class="no-underline">
+            <div class="flex items-center gap-2 text-white whitespace-nowrap"
+                 style="font-family:'Cinzel',serif; font-weight:900; font-size:clamp(15px,2.8vw,21px);">
+                <span class="logo-icon"></span>
+                History<span style="color:var(--logo-accent); transition:color 0.4s ease;">Connect</span>
+                <span class="logo-icon"></span>
+            </div>
+        </a>
+
+        @* Clasament link *@
+        <a href="/Clasament"
+           style="font-family:'Cinzel',serif; font-size:11px; font-weight:600; color:var(--gold-pale); text-decoration:none;
+                  letter-spacing:.07em; padding:5px 12px; border-radius:7px;
+                  border:1px solid rgba(200,120,0,.25); transition:all .2s;"
+           onmouseover="this.style.background='rgba(200,100,0,.15)';this.style.borderColor='rgba(255,160,0,.4)'"
+           onmouseout="this.style.background='transparent';this.style.borderColor='rgba(200,120,0,.25)'">
+            🏆 Clasament
+        </a>
+
+        @* Header Actions *@
+        <div class="flex items-center gap-4">
+            @if (User.Identity?.IsAuthenticated ?? false)
+            {
+                var esteAdmin = User.IsInRole("Administrator");
+                var profilUrl = esteAdmin ? "/Admin" : "/Cont/Profil/Profil";
+
+                <a href="@profilUrl" class="flex items-center gap-2 no-underline">
+                    @* Avatar *@
+                    <div class="w-[34px] h-[34px] rounded-full border-2 border-(--avatar-border) overflow-hidden flex-shrink-0 flex items-center justify-center transition-all duration-[400ms]"
+                         style="background:var(--avatar-bg);">
+                        @if (!string.IsNullOrEmpty(urlAvatar))
+                        {
+                            <img src="@urlAvatar" class="w-full h-full object-cover" alt="avatar" />
+                        }
+                        else
+                        {
+                            <span style="font-family:'Cinzel',serif; font-size:14px; font-weight:700; color:var(--avatar-initial);">@initiala</span>
+                        }
+                    </div>
+                    <span style="font-family:'Cinzel',serif; font-size:12px; color:var(--avatar-text); font-weight:600; white-space:nowrap;">@utilizator?.Nume</span>
+                </a>
+
+                @* Logout *@
+                <form method="post" action="/Cont/Logare-Inregistrare/Logout" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit"
+                            class="px-3 py-[5px] rounded border cursor-pointer no-underline transition-all duration-200 whitespace-nowrap hover:brightness-125 hover:-translate-y-px"
+                            style="font-family:'Cinzel',serif; font-size:11px; font-weight:600; color:var(--gold-pale); background:var(--accent-soft); border-color:var(--accent); box-shadow:0 0 8px var(--accent-soft);">
+                        Delogare
+                    </button>
+                </form>
+            }
+            else
+            {
+                @* Login button *@
+                <a href="/Cont/Logare-Inregistrare/Login"
+                   class="px-3 py-[5px] rounded border cursor-pointer no-underline transition-all duration-200 whitespace-nowrap hover:bg-(--accent-soft) hover:border-(--accent)"
+                   style="font-family:'Cinzel',serif; font-size:11px; font-weight:600; color:var(--gold-light); background:transparent; border-color:var(--fire-mid);">
+                    Autentificare
+                </a>
+
+                @* Register button *@
+                <a href="/Cont/Logare-Inregistrare/Register"
+                   class="px-3 py-[5px] rounded border cursor-pointer no-underline transition-all duration-200 whitespace-nowrap hover:bg-(--fire-mid) hover:border-(--gold-light) hover:text-white"
+                   style="font-family:'Cinzel',serif; font-size:11px; font-weight:600; color:var(--gold-light); background:color-mix(in srgb, var(--fire-dark) 70%, transparent); border-color:var(--fire-bright); box-shadow:0 0 10px rgba(0,0,0,0.5);">
+                    Înregistrare
+                </a>
+            }
+        </div>
+
+    </div>
+</header>

@@ -1,0 +1,158 @@
+@page "/Admin/Quizuri"
+@model HistoryConnect.Pages.Admin.GestiuneQuizuri.QuizuriIndexModel
+@{
+    ViewData["Title"] = "Gestionare Quiz-uri";
+}
+
+<style>
+    .admin-list-container {
+        background: linear-gradient(135deg, #0a0500 0%, #1a0f08 100%);
+        min-height: 100vh;
+        padding: 2rem 1rem;
+    }
+    
+    .admin-table {
+        background: rgba(26, 15, 8, 0.8);
+        border: 1px solid rgba(200, 100, 0, 0.2);
+        border-radius: 0.75rem;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+    
+    .admin-table thead {
+        background: rgba(200, 100, 0, 0.15);
+        border-bottom: 1px solid rgba(200, 100, 0, 0.3);
+    }
+    
+    .admin-table th {
+        color: #FFD580;
+        font-weight: 600;
+        padding: 0.75rem 1rem;
+    }
+    
+    .admin-table td {
+        color: #D4C4A8;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(200, 100, 0, 0.15);
+    }
+    
+    .admin-table tbody tr:hover {
+        background: rgba(200, 100, 0, 0.1);
+    }
+    
+    .admin-badge-info {
+        display: inline-block;
+        background: rgba(255, 165, 0, 0.2);
+        color: #FFD580;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid rgba(255, 165, 0, 0.4);
+    }
+
+    /* Stil select dropdown */
+    select[name="FiltruTip"] {
+        background-color: #140a00 !important;
+        color: #fef3c7 !important;
+        border-color: #b45000 !important;
+    }
+
+    select[name="FiltruTip"] option {
+        background-color: #1f1410 !important;
+        color: #fef3c7 !important;
+    }
+
+    select[name="FiltruTip"] option:checked {
+        background: linear-gradient(#b45000, #b45000) !important;
+        background-color: #b45000 !important;
+        color: #140a00 !important;
+    }
+</style>
+
+<div class="admin-list-container">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <a href="/Admin" class="text-amber-500 hover:text-amber-300 text-sm font-medium transition-colors inline-flex items-center gap-1">← Dashboard</a>
+                <h1 class="text-4xl font-bold text-amber-300 mt-3 flex items-center gap-3">🧩 Gestionare Quiz-uri</h1>
+                <p class="text-amber-700 text-sm mt-2">Administrează toate quiz-urile din platformă</p>
+            </div>
+            <a href="/Admin/Quizuri/Editeaza" class="px-6 py-2.5 rounded-lg font-semibold transition-all duration-200 bg-linear-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-lg hover:shadow-orange-500/50">
+                + Quiz nou
+            </a>
+        </div>
+        
+        <form method="get" class="mb-6 flex flex-wrap items-center gap-3">
+            <label class="text-sm font-semibold text-amber-300">Filtrează după tip:</label>
+
+            <select name="FiltruTip"
+                    class="rounded-lg border px-4 py-2 text-sm outline-none transition-colors focus:ring-1">
+                <option value="">Toate quiz-urile</option>
+                <option value="Istorie" selected="@(Model.FiltruTip == "Istorie")">📜 Istorie</option>
+                <option value="Traditii" selected="@(Model.FiltruTip == "Traditii")">🎭 Tradiții</option>
+            </select>
+
+            <button type="submit"
+                    class="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-amber-950 transition-colors hover:bg-amber-500">
+                Aplică
+            </button>
+
+            @if (!string.IsNullOrEmpty(Model.FiltruTip))
+            {
+                <a href="/Admin/Quizuri"
+                   class="text-sm font-semibold text-amber-500 transition-colors hover:text-amber-300">
+                    Resetează
+                </a>
+            }
+        </form>
+
+        @if (TempData["Mesaj"] != null)
+        {
+            <div class="bg-green-900 text-green-300 px-4 py-3 rounded-lg mb-6 border border-green-700">✓ @TempData["Mesaj"]</div>
+        }
+
+        <div class="admin-table">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr>
+                        <th class="text-left">Titlu Quiz</th>
+                        <th class="text-left">Lecție / Capitol</th>
+                        <th class="text-center">Întrebări</th>
+                        <th class="text-center">XP</th>
+                        <th class="text-center">Timp (s)</th>
+                        <th class="text-right">Acțiuni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var quiz in Model.Quizuri)
+                    {
+                        <tr>
+                            <td class="font-medium text-amber-100">@quiz.Titlu</td>
+                            <td>
+                                <div class="text-amber-100">@quiz.Lectie?.Titlu</div>
+                                <div class="text-xs text-amber-700">@quiz.Lectie?.Capitol?.Perioada?.Nume › @quiz.Lectie?.Capitol?.Titlu</div>
+                            </td>
+                            <td class="text-center text-amber-300 font-semibold">@quiz.Intrebari.Count</td>
+                            <td class="text-center font-bold text-amber-400">@quiz.XpCompletare XP</td>
+                            <td class="text-center text-amber-600">@(quiz.Timp > 0 ? quiz.Timp.ToString() : "—")</td>
+                            <td class="text-right space-x-3 flex justify-end">
+                                <a href="/Admin/Quizuri/Editeaza?id=@quiz.IdQuiz"
+                                   class="text-amber-400 hover:text-amber-300 font-semibold transition-colors">✏ Editează</a>
+                                <form method="post" asp-page-handler="Sterge" class="inline"
+                                      onsubmit="return confirm('Ștergi quiz-ul «@quiz.Titlu»? Tot istoricul va fi șters.')">
+                                    <input type="hidden" name="idQuiz" value="@quiz.IdQuiz" />
+                                    <button type="submit" class="text-red-400 hover:text-red-300 font-semibold transition-colors">✕ Șterge</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            @if (!Model.Quizuri.Any())
+            {
+                <p class="text-center text-amber-700 py-8 italic">Niciun quiz adăugat.</p>
+            }
+        </div>
+    </div>
+</div>

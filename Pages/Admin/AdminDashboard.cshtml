@@ -1,0 +1,198 @@
+@page "/Admin"
+@model HistoryConnect.Pages.Admin.AdminIndexModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<style>
+    .dashboard-container {
+        background: linear-gradient(135deg, #0a0500 0%, #1a0f08 100%);
+        min-height: 100vh;
+        padding: 2rem 1rem;
+    }
+    
+    .stat-card {
+        background: rgba(26, 15, 8, 0.8);
+        border: 1px solid rgba(200, 100, 0, 0.2);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        border-left: 4px solid;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(200, 100, 0, 0.4);
+    }
+    
+    .stat-label {
+        color: #FFD580;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-value {
+        color: #FFE898;
+        font-size: 2.25rem;
+        font-weight: 700;
+    }
+    
+    .admin-table {
+        background: rgba(26, 15, 8, 0.8);
+        border: 1px solid rgba(200, 100, 0, 0.2);
+        border-radius: 0.75rem;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+    
+    .admin-table thead {
+        background: rgba(200, 100, 0, 0.15);
+        border-bottom: 1px solid rgba(200, 100, 0, 0.3);
+    }
+    
+    .admin-table th {
+        color: #FFD580;
+        font-weight: 600;
+        padding: 0.75rem 1rem;
+    }
+    
+    .admin-table td {
+        color: #D4C4A8;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(200, 100, 0, 0.15);
+    }
+    
+    .admin-table tbody tr:hover {
+        background: rgba(200, 100, 0, 0.1);
+    }
+    
+    .action-btn {
+        display: inline-block;
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+</style>
+
+<div class="dashboard-container">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-4xl font-bold text-amber-300 mb-2 flex items-center gap-3">📊 Dashboard Administrator</h1>
+        <p class="text-amber-700 text-sm mb-10">Vizualizează statistici și gestionează platforma</p>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12">
+            <div class="stat-card border-l-amber-500">
+                <p class="stat-label">👥 Studenți</p>
+                <p class="stat-value">@Model.TotalStudenti</p>
+            </div>
+            <div class="stat-card border-l-blue-500">
+                <p class="stat-label">📚 Lecții</p>
+                <p class="stat-value">@Model.TotalLectii</p>
+            </div>
+            <div class="stat-card border-l-orange-500">
+                <p class="stat-label">🧩 Quiz-uri</p>
+                <p class="stat-value">@Model.TotalQuizuri</p>
+            </div>
+            <div class="stat-card border-l-purple-500">
+                <p class="stat-label">✅ Completări quiz</p>
+                <p class="stat-value">@Model.TotalCompletariQuiz</p>
+            </div>
+            <div class="stat-card border-l-rose-500">
+                <p class="stat-label">🎓 Lecții parcurse</p>
+                <p class="stat-value">@Model.TotalCompletariLectie</p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3 mb-12">
+            <a href="/Admin/Lectii" class="action-btn bg-linear-to-r from-blue-600 to-blue-700 text-white hover:from-blue-500 hover:to-blue-600 shadow-lg hover:shadow-blue-500/50">
+                📚 Gestionare Lecții
+            </a>
+            <a href="/Admin/Quizuri" class="action-btn bg-linear-to-r from-orange-600 to-orange-700 text-white hover:from-orange-500 hover:to-orange-600 shadow-lg hover:shadow-orange-500/50">
+                🧩 Gestionare Quiz-uri
+            </a>
+            <a href="/Admin/Utilizatori" class="action-btn bg-linear-to-r from-purple-600 to-purple-700 text-white hover:from-purple-500 hover:to-purple-600 shadow-lg hover:shadow-purple-500/50">
+                👥 Gestionare Utilizatori
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="admin-table">
+                <h2 class="text-lg font-bold text-amber-300 px-4 py-3 border-b border-amber-700">🏆 Top 10 Studenți</h2>
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr>
+                            <th class="text-left">#</th>
+                            <th class="text-left">Utilizator</th>
+                            <th class="text-right">XP</th>
+                            <th class="text-right">Nivel</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.TopStudenti.Count; i++)
+                        {
+                            var s = Model.TopStudenti[i];
+                            <tr>
+                                <td class="text-amber-500 font-bold">@(i + 1)</td>
+                                <td>
+                                    <div class="font-medium text-amber-100">@s.Nume</div>
+                                    <div class="text-xs text-amber-700">@s.NumeUtilizator</div>
+                                </td>
+                                <td class="text-right font-bold text-amber-400">@s.XpTotal</td>
+                                <td class="text-right text-amber-600">Niv. @s.NivelCurent</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="space-y-8">
+                <div class="admin-table">
+                    <h2 class="text-lg font-bold text-amber-300 px-4 py-3 border-b border-amber-700">🔥 Quiz-uri Populare</h2>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr>
+                                <th class="text-left">Quiz</th>
+                                <th class="text-right">Încercări</th>
+                                <th class="text-right">Scor mediu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var q in Model.QuizuriPopulare)
+                            {
+                                <tr>
+                                    <td class="font-medium text-amber-100">@q.TitluQuiz</td>
+                                    <td class="text-right text-amber-600">@q.NrIncercari</td>
+                                    <td class="text-right font-bold text-orange-400">@q.ScorMediu%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="admin-table">
+                    <h2 class="text-lg font-bold text-amber-300 px-4 py-3 border-b border-amber-700">📖 Lecții Populare</h2>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr>
+                                <th class="text-left">Lecție</th>
+                                <th class="text-right">Completări</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var l in Model.LectiiPopulare)
+                            {
+                                <tr>
+                                    <td class="font-medium text-amber-100">@l.TitluLectie</td>
+                                    <td class="text-right font-bold text-blue-400">@l.NrCompletari</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

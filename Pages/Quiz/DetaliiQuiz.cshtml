@@ -1,0 +1,261 @@
+@page
+@model HistoryConnect.Pages.Quiz.DetaliiQuizModel
+@{
+    ViewData["Title"] = "Detalii Quiz";
+
+    var pq = Model.ProgresQuiz;
+
+    var total = Model.Rezultate.Count;
+    var corecte = Model.Rezultate.Count(r => r.EsteCorecta);
+
+    var procent = pq?.Scor ?? 0;
+
+    var punctajMaxim = Model.Rezultate
+        .Sum(r => r.Intrebare.Variante
+            .Where(v => v.Corect)
+            .Sum(v => v.Punctaj));
+
+    var puncteObtinute = punctajMaxim > 0
+        ? (int)Math.Round(procent / 100.0 * punctajMaxim)
+        : 0;
+
+    var circleColor = procent >= 80 ? "#00c850" : procent >= 50 ? "#ff9955" : "#ff5555";
+    var circleIcon  = procent >= 80 ? "🏆" : procent >= 50 ? "👍" : "💪";
+
+    var scoreCardBg = procent >= 50
+        ? "rgba(0,60,20,0.55)"
+        : "rgba(80,0,0,0.55)";
+
+    var scoreCardBorder = procent >= 50
+        ? "rgba(0,200,80,0.25)"
+        : "rgba(200,0,0,0.25)";
+
+    var barGradient = procent >= 80
+        ? "linear-gradient(90deg,#00a850,#00e870)"
+        : procent >= 50
+            ? "linear-gradient(90deg,#c84800,#ff8c00)"
+            : "linear-gradient(90deg,#800000,#cc2200)";
+}
+
+<partial name="_HistoryStyles" />
+
+<style>
+@@keyframes flk {
+    0%,100% { opacity:.35; transform:scale(1); }
+    33%      { opacity:.55; transform:scale(1.05); }
+    66%      { opacity:.28; transform:scale(.97); }
+}
+
+.ember {
+    position:absolute;
+    border-radius:50%;
+    opacity:0;
+}
+
+@@keyframes rise {
+    0%   { transform:translateY(0) translateX(0); opacity:0; }
+    8%   { opacity:.8; }
+    85%  { opacity:.25; }
+    100% { transform:translateY(-100vh) translateX(var(--d)); opacity:0; }
+}
+</style>
+
+<div class="fixed inset-0 z-0 pointer-events-none page-bg"></div>
+
+<div class="fixed -top-[12%] -left-[8%] rounded-full pointer-events-none z-1"
+     style="width:clamp(150px,30vw,380px);height:clamp(150px,30vw,380px);background:radial-gradient(circle,#C84800 0%,#600800 45%,transparent 70%);opacity:.35;animation:flk 3.1s ease-in-out infinite;"></div>
+
+<div class="fixed -bottom-[12%] -right-[8%] rounded-full pointer-events-none z-1"
+     style="width:clamp(150px,30vw,380px);height:clamp(150px,30vw,380px);background:radial-gradient(circle,#C03500 0%,#5A1000 45%,transparent 70%);opacity:.3;animation:flk 2.7s ease-in-out infinite reverse;"></div>
+
+<div id="embers" class="fixed inset-0 overflow-hidden z-1 pointer-events-none"></div>
+
+<div class="relative z-10 max-w-200 mx-auto px-5 py-10 pb-20 font-['Georgia',serif]">
+
+    <a class="inline-flex items-center gap-1.5 text-[#c8864a] no-underline text-[0.88rem] mb-8
+              font-['Cinzel',serif] hover:text-[#ffaa66] transition-colors duration-200"
+       href="/Cont/Profil/Profil">
+        ← Inapoi la profil
+    </a>
+
+    <div class="rounded-2xl px-6 sm:px-8 py-7 mb-8 flex items-center gap-6 flex-wrap
+                shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-colors duration-500"
+         style="background:@scoreCardBg; border:1px solid @scoreCardBorder;">
+
+        <div class="w-22 h-22 rounded-full shrink-0 flex flex-col items-center justify-center
+                    border-[3px] shadow-[0_0_20px_rgba(0,0,0,0.4)]"
+             style="border-color:@circleColor;box-shadow:0 0 24px @(circleColor)44;">
+            <span class="text-[1.8rem] leading-none">@circleIcon</span>
+            <span class="text-[0.85rem] font-bold mt-0.5 font-['Cinzel',serif]"
+                  style="color:@circleColor;">@procent%</span>
+        </div>
+
+        <div class="flex-1 min-w-0">
+            <div class="font-['Cinzel',serif] text-base sm:text-[1.35rem] text-[#f5d78e] mb-2.5">
+                @(pq?.Quiz?.Titlu ?? "Quiz")
+            </div>
+
+            <div class="flex gap-3.5 flex-wrap text-[0.82rem] text-[#a07050]">
+                <span class="flex items-center gap-1">📖 @(pq?.Quiz?.Lectie?.Titlu ?? "—")</span>
+                <span class="flex items-center gap-1">🕐 @(pq?.DataCompletare.ToLocalTime().ToString("dd.MM.yyyy · HH:mm") ?? "—")</span>
+                <span class="flex items-center gap-1">✅ @corecte / @total complet corecte</span>
+                <span class="flex items-center gap-1">🎯 @puncteObtinute / @punctajMaxim puncte</span>
+            </div>
+
+            @if (pq?.Evaluat == true)
+            {
+                <div class="mt-2.5 inline-flex items-center gap-1 text-[0.78rem] text-[#ffd060]
+                            bg-[rgba(255,180,0,0.1)] px-2.5 py-0.5 rounded-xl border border-[rgba(255,180,0,0.2)]">
+                    ⭐ XP acordat la aceasta incercare
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="flex gap-1.5 mb-7 items-center">
+        <span class="text-[0.8rem] text-[#a07050] whitespace-nowrap">@puncteObtinute puncte</span>
+
+        <div class="flex-1 h-2 bg-white/[0.07] rounded overflow-hidden">
+            <div class="h-full rounded transition-all duration-700 ease-out"
+                 style="width:@procent%;background:@barGradient;">
+            </div>
+        </div>
+
+        <span class="text-[0.8rem] text-[#a07050] whitespace-nowrap">@punctajMaxim puncte</span>
+    </div>
+
+    @for (int i = 0; i < Model.Rezultate.Count; i++)
+    {
+        var r = Model.Rezultate[i];
+
+        string cardBorder = r.FaraRaspuns ? "border-[rgba(200,120,0,0.2)]"
+                          : r.EsteCorecta ? "border-[rgba(0,200,80,0.2)]"
+                          : r.EstePartial ? "border-[rgba(200,150,0,0.25)]"
+                                          : "border-[rgba(200,0,0,0.2)]";
+
+        string statusText = r.FaraRaspuns ? "⌛ Fara raspuns"
+                          : r.EsteCorecta ? "✓ Corect"
+                          : r.EstePartial ? "⚠ Partial"
+                                          : "✗ Gresit";
+
+        string statusColor = r.FaraRaspuns ? "#a07050"
+                           : r.EsteCorecta ? "#00c850"
+                           : r.EstePartial ? "#ffcc44"
+                                           : "#ff5555";
+
+        string statusBg = r.FaraRaspuns ? "rgba(160,112,0,.15)"
+                        : r.EsteCorecta ? "rgba(0,200,80,.15)"
+                        : r.EstePartial ? "rgba(200,150,0,.15)"
+                                        : "rgba(200,0,0,.15)";
+
+        var idVarianteAlese = r.VarianteAlese
+            .Select(v => v.IdVarianta)
+            .ToHashSet();
+
+        <div class="bg-[rgba(15,5,0,0.72)] border rounded-[13px] px-6 sm:px-7 py-6 mb-3.5 @cardBorder">
+            <div class="flex items-center gap-2.5 mb-3.5">
+                <span class="text-[0.72rem] text-[#c8864a] uppercase tracking-widest font-['Cinzel',serif]">
+                    Intrebarea @(i + 1)
+                </span>
+
+                <span class="text-[0.72rem] font-bold px-2 py-0.5 rounded ml-auto"
+                      style="color:@statusColor;background:@statusBg;">
+                    @statusText
+                </span>
+            </div>
+
+            <p class="text-base text-[#f5d78e] leading-relaxed mb-4.5">@r.Intrebare.Text</p>
+
+            <div class="flex flex-col gap-2">
+                @foreach (var v in r.Intrebare.Variante.OrderBy(x => x.IdVarianta))
+                {
+                    bool esteAleasa = idVarianteAlese.Contains(v.IdVarianta);
+                    bool esteCorecta = v.Corect;
+
+                    string vcls;
+                    string icon;
+                    string badge = "";
+                    string badgeColor = "";
+                    string badgeBg = "";
+
+                    if (esteAleasa && esteCorecta)
+                    {
+                        vcls = "bg-[rgba(0,180,80,.13)] border-[rgba(0,200,80,.4)] text-[#80ffb0]";
+                        icon = "✓";
+                        badge = "Ales · Corect";
+                        badgeBg = "rgba(0,180,80,.25)";
+                        badgeColor = "#80ffb0";
+                    }
+                    else if (esteAleasa && !esteCorecta)
+                    {
+                        vcls = "bg-[rgba(200,0,0,.13)] border-[rgba(200,0,0,.4)] text-[#ff8080]";
+                        icon = "✗";
+                        badge = "Ales · Gresit";
+                        badgeBg = "rgba(200,0,0,.25)";
+                        badgeColor = "#ff8080";
+                    }
+                    else if (!esteAleasa && esteCorecta)
+                    {
+                        vcls = "bg-[rgba(0,180,80,.06)] border-[rgba(0,200,80,.22)] text-[#60c880]";
+                        icon = "✓";
+                        badge = "Raspuns corect";
+                        badgeBg = "rgba(0,180,80,.15)";
+                        badgeColor = "#80ffb0";
+                    }
+                    else
+                    {
+                        vcls = "bg-white/[0.03] border-white/[0.06] text-[#7a6858]";
+                        icon = "·";
+                    }
+
+                    <div class="flex items-center gap-3 px-4 py-2.5 rounded-lg border-[1.5px] text-[0.92rem] @vcls">
+                        <span class="text-base shrink-0 w-4.5 text-center">@icon</span>
+                        <span class="flex-1">@v.Text</span>
+
+                        @if (!string.IsNullOrEmpty(badge))
+                        {
+                            <span class="text-[0.7rem] font-bold px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap"
+                                  style="background:@badgeBg;color:@badgeColor;">
+                                @badge
+                            </span>
+                        }
+                    </div>
+                }
+            </div>
+
+            @if (r.FaraRaspuns)
+            {
+                <div class="mt-2.5 text-[0.83rem] text-[#a07050] italic flex items-center gap-1.5">
+                    ⌛ Timpul a expirat pentru aceasta intrebare
+                </div>
+            }
+        </div>
+    }
+
+</div>
+
+<script>
+(function () {
+    const ec = document.getElementById('embers');
+    if (!ec) return;
+
+    const clr = ['#FF5500', '#FF8800', '#FFAA00', '#FF3300'];
+
+    for (let i = 0; i < 18; i++) {
+        const e = document.createElement('div');
+        e.className = 'ember';
+
+        const s = Math.random() * 3 + 2;
+        const c = clr[Math.floor(Math.random() * clr.length)];
+
+        e.style.cssText =
+            `width:${s}px;height:${s}px;left:${Math.random()*100}%;bottom:-8px;background:${c};` +
+            `box-shadow:0 0 ${s*2}px ${c};animation-delay:${Math.random()*8}s;` +
+            `animation-duration:${Math.random()*5+7}s;--d:${(Math.random()-.5)*80}px;` +
+            `position:absolute;border-radius:50%;animation-name:rise;` +
+            `animation-timing-function:linear;animation-iteration-count:infinite;opacity:0`;
+
+        ec.appendChild(e);
+    }
+})();
+</script>

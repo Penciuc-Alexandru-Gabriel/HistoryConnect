@@ -1,0 +1,50 @@
+@model HistoryConnect.Pages.IndexModel
+<script>
+    /* ── Theme din URL ────────────────────────────── */
+    (function () {
+        const cat = new URLSearchParams(window.location.search).get('category');
+        if (cat === 'traditii') {
+            document.body.classList.add('theme-traditii');
+        } else {
+            document.body.classList.remove('theme-traditii');
+        }
+    })();
+
+    /* ── Period modal ─────────────────────────────── */
+    function openModal() {
+        document.getElementById('modalOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    function closeModalOutside(e) {
+        if (e.target === document.getElementById('modalOverlay')) closeModal();
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    /* ── Tabs ─────────────────────────────────────── */
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById(this.dataset.tab)?.classList.add('active');
+        });
+    });
+
+    /* ── Category nav ─────────────────────────────── */
+    const periodId = '@(Model.PerioadaSelectata?.IdPerioada ?? 0)';
+    document.querySelectorAll('.cat-btn[data-cat]').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            window.location.href = '/?period=' + periodId + '&cat=' + this.dataset.cat;
+        });
+    });
+
+  
+
+    document.addEventListener('DOMContentLoaded', initQuiz);
+</script>

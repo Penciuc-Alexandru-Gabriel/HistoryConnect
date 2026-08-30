@@ -1,0 +1,17 @@
+bin/
+obj/
+.git
+.gitignore
+.dockerignore
+LICENSE
+README.md
+.env
+.env.local
+node_modules/
+npm-debug.log
+.DS_Store
+.vscode/
+.vs/
+.idea/
+*.swp
+*.swo

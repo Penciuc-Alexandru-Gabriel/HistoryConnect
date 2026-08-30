@@ -1,0 +1,58 @@
+@* ─── _NavBar.cshtml ─── *@
+@model HistoryConnect.Pages.IndexModel
+
+<div class="h-12 bg-[rgba(0,0,0,0.35)] border-b border-(--nav-border)">
+    <div class="flex items-center gap-[10px] px-[clamp(12px,3vw,32px)] h-full max-w-[1280px] mx-auto">
+
+    @* Buton Perioade *@
+    <button onclick="openModal()"
+            class="flex items-center gap-[7px] rounded-lg cursor-pointer transition-all duration-200 whitespace-nowrap hover:brightness-110"
+            style="font-family:'Cinzel',serif; font-size:12px; font-weight:600; padding:6px 14px;
+                   color:var(--btn-periods-text); background:var(--btn-periods-bg);
+                   border:1.5px solid var(--btn-periods-border);">
+        <span class="icon-periods"></span> Perioade Istorice
+    </button>
+
+    @* Badge perioadă activă *@
+    @if (Model.PerioadaSelectata != null)
+    {
+        <span class="whitespace-nowrap rounded-[20px] px-3 py-1"
+              style="font-family:'Cinzel',serif; font-size:11px; color:var(--badge-text);
+                     background:var(--badge-bg); border:1px solid var(--badge-border);">
+            @Model.PerioadaSelectata.Nume
+        </span>
+    }
+
+    @* Categorii *@
+    <div class="flex items-center gap-2 ml-auto">
+        @if (!Model.AfiseazaLectie)
+        {
+            <a href="/?period=@(Model.PerioadaSelectata?.IdPerioada)&category=istorie"
+               class="no-underline rounded px-3 py-[6px] border transition-all duration-200
+                      @(Model.CategorieCurenta == TipLectie.Istorie
+                          ? "bg-(--btn-periods-hover-bg) border-(--btn-periods-hover-border) text-white"
+                          : "border-(--nav-border) text-(--gold-pale) hover:bg-(--accent-soft)")"
+               style="font-family:'Cinzel',serif; font-size:11px;">
+                📖 Istorie
+            </a>
+
+            <a href="/?period=@(Model.PerioadaSelectata?.IdPerioada)&category=traditii"
+               class="no-underline rounded px-3 py-[6px] border transition-all duration-200
+                      @(Model.CategorieCurenta == TipLectie.Traditii
+                          ? "bg-(--btn-periods-hover-bg) border-(--btn-periods-hover-border) text-white"
+                          : "border-(--nav-border) text-(--gold-pale) hover:bg-(--accent-soft)")"
+               style="font-family:'Cinzel',serif; font-size:11px;">
+                🎭 Tradiții
+            </a>
+        }
+        else
+        {
+            <a class="no-underline rounded px-3 py-[6px] border border-(--nav-border) text-(--gold-pale) hover:bg-(--accent-soft) transition-all duration-200"
+               href="/?period=@Model.PerioadaSelectata?.IdPerioada&category=@Model.CategorieCurenta"
+               style="font-family:'Cinzel',serif; font-size:11px;">
+                ← Înapoi la lecții
+            </a>
+        }
+    </div>
+    </div>
+</div>

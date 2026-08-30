@@ -1,0 +1,163 @@
+@page
+@model HistoryConnect.Pages.IndexModel
+@{
+    ViewData["Title"] = "HistoryConnect";
+    ViewData["BodyClass"] = Model.CategorieCurenta == TipLectie.Traditii ? "theme-traditii" : "theme-history";
+    var returnUrl = $"{HttpContext.Request.Path}{HttpContext.Request.QueryString}";
+}
+
+<div>
+    <partial name="_HistoryStyles" />
+
+    @* Fundal fix global *@
+    <div class="fixed inset-0 z-0 pointer-events-none" style="background:var(--bg-global);"></div>
+
+    @* Glow orbs decorative *@
+    <div class="glow-orb orb-top"></div>
+    <div class="glow-orb orb-bottom"></div>
+
+    @* Particule ember *@
+    <div id="embers" class="fixed inset-0 overflow-hidden pointer-events-none" style="z-index:1;"></div>
+
+    @* Structura paginii *@
+    <div class="relative w-full" style="z-index:10;">
+        <partial name="_Hero" model="Model" />
+        <partial name="_NavBar" model="Model" />
+       @if (Model.EsteLogat && !Model.AfiseazaLectie && Model.LectiiCompletate > 0)
+{
+    <div class="relative mx-auto mt-6 max-w-[900px] px-4">
+        @if (Model.UrmatoareaLectie != null && Model.UrlContinuare != null)
+        {
+            <a href="@Model.UrlContinuare"
+               class="block rounded-xl border border-[color:var(--hc-card-border)] bg-[var(--hc-card-bg)] p-5 no-underline transition-all duration-200 hover:-translate-y-px hover:brightness-110 [box-shadow:0_8px_30px_var(--hc-card-shadow)]">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <div class="text-[15px] font-bold text-[var(--hc-card-title)]" style="font-family:'Cinzel',serif;">
+                            Continuă de unde ai rămas
+                        </div>
+                        <div class="mt-1 text-[13px] text-[var(--hc-card-muted)]">
+                            @Model.UrmatoareaLectie.Titlu
+                        </div>
+                    </div>
+
+                    <div class="text-[12px] text-[var(--hc-card-accent)]" style="font-family:'Cinzel',serif;">
+                        @Model.LectiiCompletate / @Model.TotalLectii lecții · @Model.ProcentProgres%
+                    </div>
+                </div>
+
+                <div class="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+                    <div class="h-full rounded-full bg-[image:var(--hc-progress)]" style="width:@Model.ProcentProgres%;"></div>
+                </div>
+            </a>
+        }
+        else
+        {
+            <div class="rounded-xl border border-[color:var(--hc-card-border)] bg-[var(--hc-card-bg)] p-5 text-center [box-shadow:0_8px_30px_var(--hc-card-shadow)]">
+                <div class="text-[15px] font-bold text-[var(--hc-card-title)]" style="font-family:'Cinzel',serif;">
+                    Ai finalizat lecțiile din această categorie
+                </div>
+                <div class="mt-1 text-[13px] text-[var(--hc-card-muted)]">
+                    Schimbă categoria sau revino la lecțiile deja parcurse.
+                </div>
+            </div>
+        }
+    </div>
+}
+        <partial name="_TabBar" model="Model" />
+        <partial name="_PeriodModal" model="Model" />
+    </div>
+
+    @* Popup autentificare *@
+    @if (Model.ArataPotup || HttpContext.Request.Query["showPopup"] == "true")
+    {
+        <div id="auth-popup-overlay"
+             class="fixed inset-0 z-900 flex items-center justify-center p-4"
+             style="background:rgba(0,0,0,0.75); backdrop-filter:blur(4px);">
+            <div class="relative rounded-2xl p-8 max-w-105 w-full text-center shadow-[0_0_60px_rgba(200,64,0,0.25)]"
+                 style="background:linear-gradient(160deg,#1a0800,#0d0400); border:1.5px solid rgba(200,100,0,0.4);">
+
+                @* Tailwind: CSS variables in brackets are required syntax, not a warning *@
+                <button onclick="document.getElementById('auth-popup-overlay').style.display='none'"
+                        class="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer border transition-all duration-200 hover:bg-[var(--accent-soft)] hover:border-[var(--accent)]"
+                        style="background:rgba(255,255,255,0.05); border-color:var(--fire-mid); color:var(--fire-bright); font-size:18px;">
+                    ✕
+                </button>
+
+                <div class="text-4xl mb-4">🔒</div>
+
+                <h2 class="font-bold mb-3 text-lg" style="font-family:'Cinzel',serif; color:var(--gold-pale);">
+                    Conținut restricționat
+                </h2>
+                <p class="mb-5 text-sm leading-relaxed" style="color:#A07050;">
+                    Ai explorat gratuit primul capitol.<br>
+                    Pentru a continua, creează un cont gratuit.
+                </p>
+
+                <div class="flex flex-col gap-2 text-sm mb-6 text-left bg-[rgba(255,255,255,0.04)] rounded-lg p-4">
+                    <span style="color:var(--gold-light);">✓ Acces la toate lecțiile</span>
+                    <span style="color:var(--gold-light);">✓ Quiz-uri interactive</span>
+                    <span style="color:var(--gold-light);">✓ XP și avataruri</span>
+                    <span style="color:var(--gold-light);">✓ Insigne</span>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <a href="/Cont/Logare-Inregistrare/Register?returnUrl=@Uri.EscapeDataString(returnUrl)"
+                       class="block py-3 px-6 rounded-lg no-underline font-bold transition-all duration-200 hover:opacity-90 hover:-translate-y-px"
+                       style="background:linear-gradient(135deg,#8B1A00,#D04000,#FF6020); color:var(--gold-pale);
+                              font-family:'Cinzel',serif; font-size:14px; border:2px solid #FF8040;
+                              box-shadow:0 4px 20px rgba(200,60,0,.4);">
+                        🚀 Creează cont gratuit
+                    </a>
+                    @* Tailwind: CSS variables in brackets are required syntax, not a warning *@
+                    <a href="/Cont/Logare-Inregistrare/Login?returnUrl=@Uri.EscapeDataString(returnUrl)"
+                       class="block py-2 px-6 rounded-lg no-underline text-sm transition-all duration-200 hover:border-[var(--accent)]"
+                       style="background:transparent; color:#A07050; border:1px solid rgba(255,255,255,0.12); font-family:'Georgia',serif;">
+                        Am deja un cont — Intră în cont
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<partial name="_HistoryScripts" model="Model" />
+
+@section Scripts {
+<script>
+    @* Tab logic la intrare pe lectie *@
+    @if (Model.AfiseazaLectie)
+    {
+        <text>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            const overviewTab = document.querySelector('[data-tab="overview"]');
+            if (overviewTab) overviewTab.classList.add('active');
+            const overviewPanel = document.getElementById('overview');
+            if (overviewPanel) overviewPanel.classList.add('active');
+        });
+        </text>
+    }
+
+    @* Particule ember *@
+    (function () {
+        const ec = document.getElementById('embers');
+        if (!ec) return;
+        const isTrad = '@Model.CategorieCurenta' === 'Traditii';
+        const clr = isTrad
+            ? ['#AB64FF', '#6B3A8B', '#E8D0FF', '#4B1A66', '#9D50BB']
+            : ['#FF5500','#FF8800','#FFAA00','#FF3300','#FF7700'];
+
+        for (let i = 0; i < 28; i++) {
+            const e = document.createElement('div');
+            e.className = 'ember';
+            const s = Math.random() * 4 + 2;
+            const c = clr[Math.floor(Math.random() * clr.length)];
+            e.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;bottom:-8px;background:${c};box-shadow:0 0 ${s*2}px ${c};animation-delay:${Math.random()*8}s;animation-duration:${Math.random()*5+7}s;--d:${(Math.random()-.5)*100}px`;
+            ec.appendChild(e);
+        }
+    })();
+    document.body.classList.remove('theme-history', 'theme-traditii');
+document.body.classList.add('@(Model.CategorieCurenta == TipLectie.Traditii ? "theme-traditii" : "theme-history")');
+</script>
+}

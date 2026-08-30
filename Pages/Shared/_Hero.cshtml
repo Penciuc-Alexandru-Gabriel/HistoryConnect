@@ -1,0 +1,65 @@
+@model HistoryConnect.Pages.IndexModel
+
+@{
+    var heroBg = !string.IsNullOrEmpty(Model.PerioadaSelectata?.UrlImagine)
+        ? $"--hero-img: url('{Model.PerioadaSelectata.UrlImagine}');"
+        : "--hero-img: none;";
+
+    var esteTraditii = Model.CategorieCurenta == TipLectie.Traditii;
+}
+
+@* Fundal hero *@
+<section class="relative overflow-hidden text-center border-b-2 border-[var(--fire-dark)] transition-[background] duration-400"
+         style="@heroBg background:var(--bg-hero); padding:clamp(36px,7vw,72px) 20px;">
+
+    @* Fundal imagine perioadă *@
+    <div class="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-35 mix-blend-multiply z-0"
+         style="background-image:var(--hero-img,none);"></div>
+
+    @* Overlay gradient *@
+    <div class="absolute inset-0 z-1 transition-[background] duration-400"
+         style="background:var(--hero-gradient);"></div>
+
+    @* Conținut *@
+    <div class="relative z-3 max-w-300 mx-auto px-4">
+        @if (Model.AfiseazaLectie && Model.LectieActiva != null)
+        {
+            var total = Model.LectiiAfisate.Count > 0 ? Model.LectiiAfisate.Count : 1;
+            var progress = (int)Math.Round((double)Model.LectieActiva.Ordine / total * 100);
+
+            <h1 class="font-black text-[#FFE898] m-0 leading-[1.2] mb-2.5"
+                style="font-family:'Cinzel',serif; font-size:clamp(22px,5vw,46px); text-shadow:0 2px 14px rgba(0,0,0,.95),0 0 40px rgba(0,0,0,.5);">
+                @(esteTraditii ? "✨" : "📖") @Model.LectieActiva.Titlu
+            </h1>
+
+            @* Progress bar *@
+            <div class="mx-auto h-1.5 rounded-[99px] overflow-hidden border border-[rgba(0,0,0,0.2)] mt-3.5"
+                 style="background:var(--prog-bg); width:min(400px,80%);">
+                <div class="h-full rounded-[99px] transition-[width,background] duration-500 shadow-[0_0_10px_var(--accent-soft)]"
+                     style="width:@(progress)%; background:var(--prog-fill);"></div>
+            </div>
+        }
+        else
+        {
+            <h1 class="font-black text-[#FFE898] m-0 leading-[1.2] mb-2.5"
+                style="font-family:'Cinzel',serif; font-size:clamp(22px,5vw,46px); text-shadow:0 2px 14px rgba(0,0,0,.95),0 0 40px rgba(0,0,0,.5);">
+                @(esteTraditii ? "🎭" : "⚔️")
+                @(Model.PerioadaSelectata?.Nume ?? "Istoria Romaniei")
+                @(esteTraditii ? "🎭" : "⚔️")
+            </h1>
+
+            @if (Model.PerioadaSelectata != null)
+            {
+                <p class="m-0 letter-spacing-[.15em]"
+                   style="font-family:'Cinzel',serif; font-size:clamp(11px,1.8vw,14px); color:var(--accent); letter-spacing:.15em;">
+                    @(Model.PerioadaSelectata.Inceput) – @(Model.PerioadaSelectata.Sfarsit)
+                </p>
+            }
+        }
+    </div>
+
+    @* Linie accent de jos *@
+    <div class="absolute bottom-0 left-0 right-0 h-0.5 z-4"
+         style="background:var(--hero-accent-line);"></div>
+
+</section>

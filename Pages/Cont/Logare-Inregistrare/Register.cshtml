@@ -1,0 +1,309 @@
+@page "/Cont/Logare-Inregistrare/Register"
+@model HistoryConnect.Pages.Cont.LogareInregistrare.RegisterModel
+@{
+    ViewData["Title"] = "Inregistrare - HistoryConnect";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inregistrare - HistoryConnect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --fire-dark:   #110300;
+            --fire-mid:    #6E1200;
+            --fire-bright: #B82C00;
+            --gold-light:  #FAE9A2;
+            --gold-mid:    #F2DC85;
+            --gold-dark:   #E8C858;
+            --ink:         #3A0D00;
+            --ink-mid:     #5C2000;
+            --ink-light:   #8A3200;
+            --border:      rgba(130,60,0,.6);
+            --text-btn:    #FFE090;
+        }
+        body { font-family: 'IM Fell English', Georgia, serif; }
+
+        .fire-bg {
+            position: fixed; inset: 0; z-index: 0;
+            background:
+                radial-gradient(ellipse 60% 52% at 12% 108%, #7A2000 0%, transparent 52%),
+                radial-gradient(ellipse 60% 52% at 88% 108%, #7A2000 0%, transparent 52%),
+                radial-gradient(ellipse 42% 62% at 50% 108%, #A83000 0%, transparent 44%),
+                linear-gradient(180deg, #080100 0%, #120300 58%, #1C0600 100%);
+        }
+        .torch { position: fixed; border-radius: 9999px; pointer-events: none; z-index: 1; animation: flk 3s ease-in-out infinite; }
+        .torch-l { width: clamp(160px,32vw,400px); height: clamp(160px,32vw,400px); background: radial-gradient(circle, #BB3200 0%, #581000 45%, transparent 70%); top:-12%; left:-8%; opacity:.48; }
+        .torch-r { width: clamp(160px,32vw,400px); height: clamp(160px,32vw,400px); background: radial-gradient(circle, #C03800 0%, #601200 45%, transparent 70%); bottom:-12%; right:-8%; opacity:.45; animation-direction:reverse; animation-duration:2.7s; }
+        @@keyframes flk { 0%,100%{opacity:.52;transform:scale(1)} 33%{opacity:.72;transform:scale(1.05)} 66%{opacity:.42;transform:scale(.97)} }
+
+        .parchment {
+            position: relative; overflow: hidden; border-radius: 12px;
+            background: linear-gradient(150deg, #FAE9A2 0%, #F2DC85 25%, #F7E49A 55%, #EDCF70 85%, #E8C858 100%);
+            border: 2px solid var(--border);
+            box-shadow: 0 0 0 1px rgba(255,200,80,.18) inset, 0 2px 60px rgba(180,50,0,.55), 0 0 120px rgba(120,25,0,.35);
+            animation: glow 4s ease-in-out infinite;
+        }
+        .parchment::before {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(90,40,0,.045) 28px, rgba(90,40,0,.045) 29px);
+        }
+        .parchment::after {
+            content: ''; position: absolute; inset: 10px; pointer-events: none;
+            border: 1px solid rgba(110,35,0,.22); border-radius: 8px;
+        }
+        @@keyframes glow {
+            0%,100% { box-shadow: 0 0 40px rgba(200,60,0,.5), 0 0 80px rgba(140,20,0,.3); }
+            50%      { box-shadow: 0 0 60px rgba(240,80,0,.6), 0 0 130px rgba(160,30,0,.4); }
+        }
+
+        .inp {
+            width: 100%; padding: 10px 13px;
+            background: rgba(80,25,0,.08); border: 1.5px solid rgba(140,55,0,.55); border-radius: 6px;
+            color: var(--ink); font-family: 'IM Fell English', serif; font-size: 14px;
+            transition: border-color .2s, background .2s, box-shadow .2s; outline: none;
+        }
+        .inp::placeholder { color: #9B5530; opacity: .65; }
+        .inp:focus { border-color: #C04000; background: rgba(255,225,160,.3); box-shadow: 0 0 0 3px rgba(180,60,0,.15); }
+
+        .inp-secret {
+            width: 100%; padding: 10px 13px;
+            background: rgba(40,10,0,.1); border: 1.5px dashed rgba(100,40,0,.45); border-radius: 6px;
+            color: var(--ink); font-family: 'IM Fell English', serif; font-size: 14px; font-style: italic;
+            transition: border-color .2s, background .2s; outline: none;
+        }
+        .inp-secret::placeholder { color: #7A4020; opacity: .55; }
+        .inp-secret:focus { border-style: solid; border-color: #A05000; background: rgba(255,200,130,.18); }
+
+       
+        .validation-summary-valid { display: none; }
+
+        .ember { position: absolute; border-radius: 50%; animation: rise linear infinite; opacity: 0; }
+        @@keyframes rise {
+            0%   { transform: translateY(0) translateX(0); opacity: 0; }
+            8%   { opacity: .9; }
+            85%  { opacity: .35; }
+            100% { transform: translateY(-95vh) translateX(var(--d)); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen overflow-x-hidden" style="background:var(--fire-dark);">
+
+    <div class="fire-bg"></div>
+    <div class="torch torch-l"></div>
+    <div class="torch torch-r"></div>
+    <div id="embers" class="fixed inset-0 overflow-hidden pointer-events-none" style="z-index:1;"></div>
+
+    @* Back button *@
+    <a href="/"
+       class="fixed top-4 left-4 z-50 flex items-center justify-center no-underline transition-all hover:scale-110 rounded-full"
+       style="width:46px;height:46px;background:linear-gradient(135deg,#6E1200,#B82C00);border:1.5px solid rgba(255,140,50,.65);box-shadow:0 4px 20px rgba(180,50,0,.55);">
+        <span style="font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:#FFE090;letter-spacing:.05em;">HC</span>
+    </a>
+
+    <div class="relative flex items-center justify-center min-h-screen py-20"
+         style="z-index:10;padding-left:max(16px,5vw);padding-right:max(16px,5vw);">
+        <div style="width:100%;max-width:390px;">
+
+            @* Parchment card *@
+            <div class="parchment">
+                <span class="absolute top-[10px] left-[10px] text-base leading-none select-none" style="color:rgba(120,45,0,.5);">✦</span>
+                <span class="absolute top-[10px] right-[10px] text-base leading-none select-none" style="color:rgba(120,45,0,.5);">✦</span>
+                <span class="absolute bottom-[10px] left-[10px] text-base leading-none select-none" style="color:rgba(120,45,0,.5);">✦</span>
+                <span class="absolute bottom-[10px] right-[10px] text-base leading-none select-none" style="color:rgba(120,45,0,.5);">✦</span>
+
+                <div class="relative" style="z-index:10; padding:clamp(18px,4vw,36px);">
+
+                    @* Header *@
+                    <div class="text-center">
+                        <div class="font-black leading-[1.1]"
+                             style="font-family:'Cinzel',serif;font-size:clamp(22px,4.5vw,34px);color:#5C0D00;letter-spacing:.03em;text-shadow:0 2px 8px rgba(0,0,0,.1);">
+                            HistoryConnect
+                        </div>
+                        <div class="uppercase tracking-[.12em] mt-1"
+                             style="font-family:'Cinzel',serif;font-size:clamp(10px,1.8vw,13px);color:var(--ink-light);">
+                            Cont nou
+                        </div>
+                        <div class="italic text-[12.5px] mt-1" style="color:#7A3015;">
+                            Alatura-te comunitatii de exploratori ai istoriei
+                        </div>
+                    </div>
+
+                    <hr class="my-5 border-0 h-[1.5px]"
+                        style="background:linear-gradient(to right,transparent,rgba(120,40,0,.4),transparent);">
+
+                    @* Form *@
+                    <form method="post" autocomplete="off" class="flex flex-col gap-4">
+
+                        <div asp-validation-summary="ModelOnly"
+                             class="rounded-md p-[10px_14px] text-[13px] italic"
+                             style="background:rgba(140,0,0,.1);border:1.5px solid rgba(140,0,0,.4);color:#680000;"></div>
+
+                        @* Nume complet *@
+                        <div>
+                            <label asp-for="Input.NumeComplet"
+                                   class="block mb-[6px] uppercase tracking-[.09em] font-semibold text-[11px]"
+                                   style="font-family:'Cinzel',serif;color:var(--ink-mid);">
+                                Nume complet
+                            </label>
+                            <input asp-for="Input.NumeComplet" class="inp" placeholder="ex: Ion Popescu" autocomplete="off" />
+                            <span asp-validation-for="Input.NumeComplet" class="block mt-1 text-xs italic" style="color:#AA0000;"></span>
+                        </div>
+
+                        @* Nume utilizator *@
+                        <div>
+                            <label asp-for="Input.NumeUtilizator"
+                                   class="block mb-[6px] uppercase tracking-[.09em] font-semibold text-[11px]"
+                                   style="font-family:'Cinzel',serif;color:var(--ink-mid);">
+                                Nume utilizator
+                            </label>
+                            <input asp-for="Input.NumeUtilizator" class="inp" placeholder="ex: Ion123" autocomplete="off" />
+                            <span asp-validation-for="Input.NumeUtilizator" class="block mt-1 text-xs italic" style="color:#AA0000;"></span>
+                            <p class="mt-1 text-[11px] italic opacity-80" style="color:#8B4020;">Doar litere, cifre si _ (fara spatii)</p>
+                        </div>
+
+                        @* Email *@
+                        <div>
+                            <label asp-for="Input.Email"
+                                   class="block mb-[6px] uppercase tracking-[.09em] font-semibold text-[11px]"
+                                   style="font-family:'Cinzel',serif;color:var(--ink-mid);">
+                                Email
+                            </label>
+                            <input asp-for="Input.Email" class="inp" placeholder="exemplu@email.com" autocomplete="off" />
+                            <span asp-validation-for="Input.Email" class="block mt-1 text-xs italic" style="color:#AA0000;"></span>
+                        </div>
+
+                        @* Parola *@
+                        <div>
+                            <label asp-for="Input.Parola"
+                                   class="block mb-[6px] uppercase tracking-[.09em] font-semibold text-[11px]"
+                                   style="font-family:'Cinzel',serif;color:var(--ink-mid);">
+                                Parola
+                            </label>
+                            <div class="relative">
+                                <input asp-for="Input.Parola" id="campParola" class="inp" type="password" placeholder="Minim 6 caractere" autocomplete="off" style="padding-right:40px;" />
+                                <button type="button" onclick="toggleVizibil('campParola','ochiParola')"
+                                        class="absolute right-[10px] top-1/2 -translate-y-1/2 bg-transparent border-0 cursor-pointer p-0 leading-none"
+                                        style="color:#7A3015;">
+                                    <span id="ochiParola">👁</span>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Input.Parola" class="block mt-1 text-xs italic" style="color:#AA0000;"></span>
+                            <p class="mt-1 text-[11px] italic opacity-80" style="color:#8B4020;">O litera mare, una mica si cel putin o cifra</p>
+                        </div>
+
+                        @* Confirma parola *@
+                        <div>
+                            <label asp-for="Input.ConfirmaParola"
+                                   class="block mb-[6px] uppercase tracking-[.09em] font-semibold text-[11px]"
+                                   style="font-family:'Cinzel',serif;color:var(--ink-mid);">
+                                Confirma parola
+                            </label>
+                            <div class="relative">
+                                <input asp-for="Input.ConfirmaParola" id="campConfirmaParola" class="inp" type="password" placeholder="Repeta parola" autocomplete="off" style="padding-right:40px;" />
+                                <button type="button" onclick="toggleVizibil('campConfirmaParola','ochiConfirma')"
+                                        class="absolute right-[10px] top-1/2 -translate-y-1/2 bg-transparent border-0 cursor-pointer p-0 leading-none"
+                                        style="color:#7A3015;">
+                                    <span id="ochiConfirma">👁</span>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Input.ConfirmaParola" class="block mt-1 text-xs italic" style="color:#AA0000;"></span>
+                        </div>
+
+                        @* Cod admin (optional) *@
+                        <div>
+                            <div class="flex items-center gap-[10px] my-[2px]">
+                                <div class="flex-1 h-px" style="background:linear-gradient(to right,transparent,rgba(100,40,0,.28),transparent);"></div>
+                                <span style="font-family:'Cinzel',serif;font-size:9px;color:rgba(90,30,0,.42);letter-spacing:.1em;">⚜ Acces privilegiat ⚜</span>
+                                <div class="flex-1 h-px" style="background:linear-gradient(to right,transparent,rgba(100,40,0,.28),transparent);"></div>
+                            </div>
+                            <label asp-for="Input.CodAdmin"
+                                   class="block mt-[6px] mb-[6px] uppercase tracking-[.09em] font-semibold text-[11px]"
+                                   style="font-family:'Cinzel',serif;color:rgba(90,30,0,.55);">
+                                Cod de acces
+                                <span class="font-normal italic normal-case tracking-normal text-[9.5px]">(optional)</span>
+                            </label>
+                            <div class="relative">
+                                <input asp-for="Input.CodAdmin" id="campCodAdmin" class="inp-secret" type="password"
+                                       placeholder="Lasa gol daca nu ai un cod de acces" autocomplete="off" style="padding-right:40px;" />
+                                <button type="button" onclick="toggleVizibil('campCodAdmin','ochiCod')"
+                                        class="absolute right-[10px] top-1/2 -translate-y-1/2 bg-transparent border-0 cursor-pointer p-0 leading-none opacity-70"
+                                        style="color:#7A4020;">
+                                    <span id="ochiCod">👁</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        @* Submit *@
+                        <button type="submit"
+                                class="w-full py-3 px-5 rounded-[7px] font-bold uppercase tracking-[.1em] cursor-pointer transition-all duration-300
+                                       hover:-translate-y-px hover:shadow-[0_6px_36px_rgba(220,70,0,.65)] active:translate-y-0"
+                                style="font-family:'Cinzel',serif;font-size:clamp(12px,1.9vw,14px);
+                                       background:linear-gradient(135deg,#6E1200 0%,#B82C00 45%,#6E1200 100%);
+                                       background-size:200% auto; color:var(--text-btn);
+                                       border:1.5px solid rgba(255,140,50,.7);text-shadow:0 1px 4px rgba(0,0,0,.4);
+                                       box-shadow:0 4px 24px rgba(180,50,0,.45);">
+                            Creeaza cont
+                        </button>
+                    </form>
+
+                    @* Divider *@
+                    <div class="flex items-center gap-[10px] mt-5 mb-4">
+                        <div class="flex-1 h-px" style="background:linear-gradient(to right,transparent,rgba(120,45,0,.4),transparent);"></div>
+                        <span style="font-family:'Cinzel',serif;font-size:9.5px;color:rgba(110,35,0,.55);letter-spacing:.12em;">⚜ SAU ⚜</span>
+                        <div class="flex-1 h-px" style="background:linear-gradient(to right,transparent,rgba(120,45,0,.4),transparent);"></div>
+                    </div>
+
+                    <p class="text-center m-0" style="font-size:13.5px;color:#5A2200;">
+                        Ai deja un cont?
+                        <a href="/cont/logare-inregistrare/login"
+                           class="font-bold no-underline transition-opacity hover:opacity-75"
+                           style="font-family:'Cinzel',serif;font-size:12px;color:#A03800;letter-spacing:.05em;">
+                            Autentifica-te
+                        </a>
+                    </p>
+
+                </div>
+            </div>
+
+            @* Quote *@
+            <div class="mt-5 rounded-lg px-6 py-5 text-center"
+                 style="background:linear-gradient(135deg,#140400,#260800,#140400);border:1.5px solid rgba(120,45,0,.5);box-shadow:0 0 24px rgba(140,35,0,.35);">
+                <p class="italic leading-relaxed m-0" style="color:#EDD090;font-size:12.5px;">
+                    <span style="color:#FF9040;font-family:'Cinzel',serif;font-size:20px;">"</span>
+                    Historia magistra vitae. Istoria este învățătoarea vieții.
+                    <span style="color:#FF9040;font-family:'Cinzel',serif;font-size:20px;">"</span>
+                </p>
+                <p class="mt-2 tracking-wide" style="color:#A07040;font-family:'Cinzel',serif;font-size:10.5px;">— Cicero</p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function toggleVizibil(campId, ochiId) {
+            const camp = document.getElementById(campId);
+            const ochi = document.getElementById(ochiId);
+            if (camp.type === 'password') { camp.type = 'text'; ochi.textContent = '🙈'; }
+            else                          { camp.type = 'password'; ochi.textContent = '👁'; }
+        }
+    </script>
+    <script>
+        const ec = document.getElementById('embers');
+        const clr = ['#FF5500','#FF8800','#FFAA00','#FF3300','#FF6600'];
+        for (let i = 0; i < 28; i++) {
+            const e = document.createElement('div');
+            e.className = 'ember';
+            const s = Math.random() * 3.5 + 1.5;
+            const c = clr[Math.floor(Math.random() * clr.length)];
+            e.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;bottom:-8px;background:${c};box-shadow:0 0 ${s*2}px ${c};animation-delay:${Math.random()*8}s;animation-duration:${Math.random()*5+7}s;--d:${(Math.random()-.5)*100}px`;
+            ec.appendChild(e);
+        }
+    </script>
+    <partial name="_ValidationScriptsPartial" />
+</body>
+</html>

@@ -1,0 +1,175 @@
+@page "/email/ConfirmaEmail"
+@model HistoryConnect.Pages.Cont.LogareInregistrare.Email.ConfirmaEmailModel
+@{
+    ViewData["Title"] = "Confirma Emailul";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'IM Fell English', Georgia, serif; }
+        .parchment {
+            background: linear-gradient(150deg, #FAE9A2 0%, #F2DC85 25%, #F7E49A 55%, #EDCF70 85%, #E8C858 100%);
+            border: 2px solid rgba(130,60,0,.6);
+            box-shadow: 0 0 0 1px rgba(255,200,80,.18) inset, 0 2px 60px rgba(180,50,0,.55);
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body style="background: linear-gradient(180deg, #080100 0%, #120300 58%, #1C0600 100%);">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="w-full max-w-md parchment p-8 text-center">
+
+            @if (Model.IsAsteptare)
+            {
+                <!-- MOD AȘTEPTARE -->
+                <div style="font-family:'Cinzel',serif;font-size:32px;color:#5C0D00;margin-bottom:1rem;font-weight:900;">
+                    ✉️
+                </div>
+                <h1 style="font-family:'Cinzel',serif;font-size:24px;color:#5C0D00;font-weight:700;margin-bottom:1rem;">
+                    Link de Confirmare Email Trimis
+                </h1>
+                <p style="color:#6B2200;margin-bottom:1rem;font-size:15px;">
+                    Un link de confirmare a fost trimis la <strong>@Model.Email</strong>.
+                </p>
+                <p style="color:#7A3015;margin-bottom:1.5rem;font-size:14px;">
+                    Verifică-ți inbox-ul și folder-ul de spam. Link-ul este valabil pentru 24 de ore.
+                </p>
+                <a href="/Cont/Logare-Inregistrare/Login"
+                   style="display:inline-block;background:linear-gradient(135deg,#6E1200,#B82C00);color:#FFE090;padding:0.75rem 1.5rem;
+                          border-radius:6px;font-weight:700;text-decoration:none;font-size:13px;
+                          font-family:'Cinzel',serif;letter-spacing:.05em;margin-bottom:1.5rem;">
+                    ← Mergi la Autentificare
+                </a>
+
+                <div style="border-top:1px solid rgba(120,45,0,.3);padding-top:1rem;">
+                    <p class="text-center text-xs italic m-0 mb-3" style="color:#7A3015;">
+                        Nu ai primit emailul?
+                    </p>
+
+                    @* FIX BUG 6: SuccessMessage afișat cu stil verde (nu roșu ca eroare) *@
+                    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+                    {
+                        <div style="background:rgba(20,120,40,.14);border:1px solid #1F7A2E;color:#145020;
+                                    border-radius:6px;padding:10px 14px;margin-bottom:0.75rem;font-size:13px;font-style:italic;">
+                            @Model.SuccessMessage
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.MesajEroare))
+                    {
+                        <div style="background:rgba(160,0,0,.12);border:1px solid #8B0000;color:#680000;
+                                    border-radius:6px;padding:10px 14px;margin-bottom:0.75rem;font-size:13px;font-style:italic;">
+                            @Model.MesajEroare
+                        </div>
+                    }
+
+                    @* FIX BUG 5: Formularul posta la Register (asp-page="/Cont/Logare-Inregistrare/Register"),
+                       deci returna formularul de înregistrare în loc de această pagină.
+                       Acum postează la pagina curentă (ConfirmaEmail) unde handler-ul este definit. *@
+                    <form method="post" asp-page-handler="TrimiteReconfirmare" class="flex flex-col gap-2">
+                        @* FIX: Input.Email → Email (cheie de binding corectă pentru acest model) *@
+                        <input type="hidden" name="Email" value="@Model.Email" />
+                        <button type="submit"
+                                class="w-full py-2 px-3 rounded text-xs font-semibold uppercase tracking-[.08em] cursor-pointer transition-all"
+                                style="background:rgba(200,100,0,.3);color:#8A3200;border:1px solid rgba(200,100,0,.4);">
+                            Retrimite Email
+                        </button>
+                    </form>
+                </div>
+            }
+            else if (Model.ConfirmatCuSucces)
+            {
+                <!-- MOD CONFIRMARE - SUCCES -->
+                <div style="font-size:48px;margin-bottom:1rem;">✓</div>
+                <h1 style="font-family:'Cinzel',serif;font-size:24px;color:#0B7A38;font-weight:700;margin-bottom:1rem;">
+                    Succes!
+                </h1>
+                @* FIX BUG 3: Mesaj dinamic (distinge "deja confirmat" vs "confirmat acum") *@
+                <p style="color:#2D5A3B;margin-bottom:1.5rem;font-size:15px;">
+                    @if (!string.IsNullOrEmpty(Model.Mesaj))
+                    {
+                        @Model.Mesaj
+                    }
+                    else
+                    {
+                        <text>Emailul tău <strong>@Model.Email</strong> a fost confirmat cu succes.</text>
+                    }
+                </p>
+                <a href="/Cont/Logare-Inregistrare/Login"
+                   style="display:inline-block;background:linear-gradient(135deg,#0B7A38,#1FB55E);color:white;padding:0.75rem 1.5rem;
+                          border-radius:6px;font-weight:700;text-decoration:none;font-size:13px;
+                          font-family:'Cinzel',serif;letter-spacing:.05em;">
+                    Mergi la Autentificare →
+                </a>
+            }
+            else
+            {
+                <!-- MOD CONFIRMARE - EROARE -->
+                <div style="font-size:48px;margin-bottom:1rem;">⚠️</div>
+                <h1 style="font-family:'Cinzel',serif;font-size:24px;color:#7A2020;font-weight:700;margin-bottom:1rem;">
+                    Link Expirat
+                </h1>
+                @* FIX BUG 3: Afișează mesajul specific de eroare (nu mai este ignorat) *@
+                <p style="color:#5A2200;margin-bottom:1rem;font-size:15px;">
+                    @if (!string.IsNullOrEmpty(Model.MesajEroare))
+                    {
+                        @Model.MesajEroare
+                    }
+                    else if (!string.IsNullOrEmpty(Model.Email))
+                    {
+                        <span>Link-ul de confirmare este invalid sau a expirat pentru <strong>@Model.Email</strong>.</span>
+                    }
+                    else
+                    {
+                        <span>Link-ul de confirmare este invalid sau a expirat.</span>
+                    }
+                </p>
+                <p style="color:#7A3015;margin-bottom:1.5rem;font-size:14px;">
+                    Poți cere un nou email de confirmare:
+                </p>
+
+                @if (!string.IsNullOrEmpty(Model.Email))
+                {
+                    @* FIX BUG 5: Același fix ca mai sus — postează la pagina curentă *@
+                    <form method="post" asp-page-handler="TrimiteReconfirmare" class="mb-4">
+                        <input type="hidden" name="Email" value="@Model.Email" />
+                        <button type="submit"
+                                style="display:inline-block;width:100%;background:linear-gradient(135deg,#B84C00,#E67E22);color:#FFE090;padding:0.75rem 1.5rem;
+                                       border:none;border-radius:6px;font-weight:700;text-decoration:none;font-size:13px;
+                                       font-family:'Cinzel',serif;letter-spacing:.05em;cursor:pointer;">
+                            Retrimite Email de Confirmare
+                        </button>
+                    </form>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+                {
+                    <div style="background:rgba(20,120,40,.14);border:1px solid #1F7A2E;color:#145020;
+                                border-radius:6px;padding:10px 14px;margin-bottom:0.75rem;font-size:13px;font-style:italic;">
+                        @Model.SuccessMessage
+                    </div>
+                }
+
+                <div style="border-top:1px solid rgba(120,45,0,.5);padding-top:1rem;margin-top:1rem;">
+                    <p style="color:#7A3015;margin:0;font-size:13px;">Sau</p>
+                    <a href="/Cont/Logare-Inregistrare/Register"
+                       style="color:#A03800;font-weight:700;text-decoration:underline;display:inline-block;margin-top:0.5rem;font-size:13px;">
+                        Creează un cont nou
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <p class="text-center text-gray-500 text-sm mt-6">
+        <a href="/" style="color:rgba(180,100,50,.6);text-decoration:none;">← Înapoi la pagina principală</a>
+    </p>
+</body>
+</html>

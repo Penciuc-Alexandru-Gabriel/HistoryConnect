@@ -1,0 +1,31 @@
+# Build
+bin/
+obj/
+
+# Secrets & config locale
+appsettings.Development.json
+secrets.json
+
+# Variabile de mediu 
+.env
+.env.local
+.env.production
+
+# User Secrets (Visual Studio)
+**/Properties/launchSettings.json
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (Tailwind)
+node_modules/
+
+
+DataProtection-Keys/
+HistoryConnect.session.sql

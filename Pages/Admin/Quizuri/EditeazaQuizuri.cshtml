@@ -1,0 +1,799 @@
+@page "/Admin/Quizuri/Editeaza"
+@model HistoryConnect.Pages.Admin.GestiuneQuizuri.EditeazaQuizModel
+@{
+    ViewData["Title"] = Model.EsteEditare ? "Editează Quiz" : "Quiz Nou";
+}
+
+<style>
+    .admin-container {
+        background: linear-gradient(135deg, #0a0500 0%, #1a0f08 100%);
+        min-height: 100vh;
+        padding: 2rem 1rem;
+    }
+    
+    .admin-input {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(200, 100, 0, 0.3);
+        color: #E8D4B8;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        transition: all 0.2s;
+        color-scheme: dark;
+    }
+    
+    .admin-input:focus {
+        outline: none;
+        border-color: rgba(255, 165, 0, 0.6);
+        box-shadow: 0 0 10px rgba(255, 165, 0, 0.3);
+        background: rgba(255, 255, 255, 0.08);
+    }
+    
+    .admin-input::placeholder {
+        color: rgba(200, 120, 80, 0.6);
+    }
+    .admin-input option {
+        background: #1a0f08;
+        color: #E8D4B8;
+    }
+    .admin-input option:checked {
+        background: #7c2d12;
+        color: #FFE898;
+    }
+    .admin-input-traditii option {
+        background: #1b1028;
+        color: #e9d5ff;
+    }
+
+    .admin-input-traditii option:checked {
+        background: #6b21a8;
+        color: #f3e8ff;
+    }
+    
+    .admin-label {
+        color: #FFD580;
+        font-weight: 500;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .admin-card {
+        background: rgba(26, 15, 8, 0.8);
+        border: 1px solid rgba(200, 100, 0, 0.2);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+    }
+    
+    .admin-intrebare {
+        background: rgba(50, 30, 15, 0.6);
+        border: 1px solid rgba(200, 100, 0, 0.25);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        position: relative;
+    }
+    
+    .admin-varianta {
+        background: rgba(40, 25, 12, 0.8);
+        border: 1px solid rgba(200, 100, 0, 0.2);
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+    .admin-badge {
+        background: linear-gradient(135deg, rgba(255, 165, 0, 0.3), rgba(200, 100, 0, 0.3));
+        color: #FFD580;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        border: 1px solid rgba(255, 165, 0, 0.4);
+    }
+
+    .quiz-editor-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 420px;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .quiz-preview {
+        position: sticky;
+        top: 24px;
+        background: rgba(26, 15, 8, 0.88);
+        border: 1px solid rgba(200, 100, 0, 0.25);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .quiz-preview-card {
+        background: linear-gradient(135deg, #fff0d4, #e6c898);
+        color: #380C00;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .quiz-preview-header {
+        background: linear-gradient(135deg, #5A1200, #9A2800, #C03800);
+        color: #FFE898;
+        padding: 14px 18px;
+        font-family: 'Cinzel', serif;
+        font-weight: 700;
+        border-bottom: 3px solid #FF6020;
+    }
+
+    .quiz-preview-body {
+        padding: 18px;
+        font-family: Georgia, serif;
+    }
+
+    .quiz-preview-question {
+        border: 1px solid rgba(90, 18, 0, .18);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+        background: rgba(255,255,255,.32);
+    }
+
+    .quiz-preview-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 9px;
+        border-radius: 7px;
+        margin-top: 6px;
+        background: rgba(80, 30, 0, .08);
+    }
+
+    .quiz-preview-option.correct {
+        background: rgba(30, 130, 45, .18);
+        border: 1px solid rgba(30, 130, 45, .35);
+    }
+
+    .quiz-preview-img {
+        max-width: 100%;
+        border-radius: 8px;
+        margin: 10px 0;
+        display: block;
+    }
+
+    @@media (max-width: 1100px) {
+        .quiz-editor-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .quiz-preview {
+            position: static;
+        }
+    }
+    .admin-input-traditii {
+        border-color: rgba(168, 85, 247, 0.65) !important;
+        color: #e9d5ff !important;
+        box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.25);
+    }
+
+    .admin-filter-hint {
+        color: #c084fc;
+        font-size: 0.75rem;
+        margin-top: 0.35rem;
+    }
+</style>
+
+<div class="admin-container">
+    <div class="max-w-7xl mx-auto">
+        <div class="mb-8">
+            <a href="/Admin/Quizuri" class="text-amber-500 hover:text-amber-300 text-sm font-medium transition-colors mb-4 inline-flex items-center gap-1">
+                ← Înapoi la Quiz-uri
+            </a>
+            <h1 class="text-4xl font-bold text-amber-300 mt-2 flex items-center gap-3">
+                @(Model.EsteEditare ? "✏️ Editează Quiz" : "➕ Quiz Nou")
+            </h1>
+            <p class="text-amber-700 text-sm mt-2">Creează și gestionează quiz-uri interactive pentru lecții</p>
+        </div>
+
+        <div id="alerta" class="hidden mb-6 px-4 py-3 rounded-lg text-sm font-medium backdrop-filter blur-lg"></div>
+
+        <div class="quiz-editor-grid">
+            <div>
+                <div class="admin-card mb-6">
+                    <h2 class="text-xl font-bold text-amber-300 mb-6 flex items-center gap-2">📋 Informații Quiz</h2>
+
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="admin-label">Tip lecție</label>
+                                <select id="filtruTipLectie" class="admin-input w-full">
+                                    <option value="">Toate tipurile</option>
+                                    <option value="Istorie">📜 Istorie</option>
+                                    <option value="Traditii">🎭 Tradiții</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="admin-label">Perioadă</label>
+                                <select id="filtruPerioada" class="admin-input w-full">
+                                    <option value="">Toate perioadele</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="admin-label">Capitol</label>
+                                <select id="filtruCapitol" class="admin-input w-full">
+                                    <option value="">Toate capitolele</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="admin-label">Lecție</label>
+                                <select id="idLectie" class="admin-input w-full">
+                                    <option value="0"
+                                            data-tip=""
+                                            data-perioada-id=""
+                                            data-perioada=""
+                                            data-capitol-id=""
+                                            data-capitol="">
+                                        — Selectează lecția —
+                                    </option>
+                                    @foreach (var item in Model.LectiiSelectie)
+                                    {
+                                        <option value="@item.IdLectie"
+                                                data-tip="@item.Tip"
+                                                data-perioada-id="@item.IdPerioada"
+                                                data-perioada="@item.Perioada"
+                                                data-capitol-id="@item.IdCapitol"
+                                                data-capitol="@item.Capitol">
+                                            @(item.Tip == "Traditii" ? "🎭" : "📜") @item.Perioada › @item.Capitol › @item.Text
+                                        </option>
+                                    }
+                                </select>
+                                <div id="lectieTipHint" class="admin-filter-hint hidden">Lecție de tradiții selectată</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="admin-label">Titlu Quiz</label>
+                            <input id="titlu" type="text" placeholder="ex: Quiz despre Dacia"
+                                   class="admin-input w-full" />
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="admin-label">XP la completare</label>
+                                <input id="xpCompletare" type="number" min="0" value="50" class="admin-input w-full" />
+                            </div>
+                            <div>
+                                <label class="admin-label">Timp total (secunde) <span class="text-amber-700 font-normal">(calculat automat)</span></label>
+                                <input id="timpQuiz" type="number" min="0" readonly placeholder="0" class="admin-input w-full bg-amber-950 cursor-not-allowed" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="admin-label">Feedback final <span class="text-amber-700 font-normal">(opțional)</span></label>
+                            <textarea id="feedback" rows="2" placeholder="Mesaj afișat după completarea quiz-ului..."
+                                      class="admin-input w-full"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="listaIntrebari" class="space-y-4 mb-6"></div>
+
+                <button type="button" onclick="adaugaIntrebare()"
+                        class="w-full border-2 border-dashed border-amber-600 text-amber-400 hover:border-amber-500 hover:bg-amber-950 rounded-lg py-3 font-semibold transition-all duration-200">
+                    ＋ Adaugă întrebare
+                </button>
+
+                <div class="flex gap-3 mt-8 pt-6 border-t border-amber-900">
+                    <button onclick="salveaza()"
+                            class="px-8 py-2.5 rounded-lg font-semibold transition-all duration-200 bg-linear-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-lg hover:shadow-orange-500/50">
+                        @(Model.EsteEditare ? "💾 Salvează modificările" : "✅ Creează Quiz")
+                    </button>
+                    <a href="/Admin/Quizuri"
+                       class="px-6 py-2.5 rounded-lg font-semibold transition-all duration-200 bg-gray-700 hover:bg-gray-600 text-gray-200">
+                        Anulează
+                    </a>
+                </div>
+            </div>
+
+            <aside class="quiz-preview">
+                <div style="color:#FFD580; font-size:13px; font-weight:600; margin-bottom:10px;">
+                    👁 Preview live
+                    <span style="font-weight:400; color:#a07050; font-size:11px;">(se actualizează automat)</span>
+                </div>
+
+                <div class="quiz-preview-card">
+                    <div class="quiz-preview-header">
+                        <span id="previewQuizTitlu">Quiz fără titlu</span>
+                    </div>
+                    <div class="quiz-preview-body" id="previewQuizBody">
+                        <p style="color:#8A5030; font-style:italic;">Adaugă întrebări pentru a vedea preview-ul...</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let quizId = 0;
+let intrebari = [];
+let nrIntrebare = 0;
+
+const dateLaIncarcare = @Html.Raw(Model.QuizJsonInitial);
+const filtruTipLectie = document.getElementById('filtruTipLectie');
+const filtruPerioada = document.getElementById('filtruPerioada');
+const filtruCapitol = document.getElementById('filtruCapitol');
+const selectLectie = document.getElementById('idLectie');
+const lectieTipHint = document.getElementById('lectieTipHint');
+
+const lectieOptions = [...selectLectie.options].filter(opt => opt.value !== '0');
+
+function optiuniVizibileDupaTip() {
+    const tip = filtruTipLectie?.value || '';
+    return lectieOptions.filter(opt => !tip || opt.dataset.tip === tip);
+}
+
+function populateazaPerioade() {
+    const perioadaCurenta = filtruPerioada.value;
+    const perioade = new Map();
+
+    optiuniVizibileDupaTip().forEach(opt => {
+        perioade.set(opt.dataset.perioadaId, opt.dataset.perioada);
+    });
+
+    filtruPerioada.innerHTML = '<option value="">Toate perioadele</option>';
+    [...perioade.entries()].forEach(([id, nume]) => {
+        filtruPerioada.insertAdjacentHTML('beforeend', `<option value="${id}">${escHtml(nume)}</option>`);
+    });
+
+    if ([...perioade.keys()].includes(perioadaCurenta)) {
+        filtruPerioada.value = perioadaCurenta;
+    }
+}
+
+function populateazaCapitole() {
+    const capitolCurent = filtruCapitol.value;
+    const perioada = filtruPerioada?.value || '';
+    const capitole = new Map();
+
+    optiuniVizibileDupaTip()
+        .filter(opt => !perioada || opt.dataset.perioadaId === perioada)
+        .forEach(opt => {
+            capitole.set(opt.dataset.capitolId, opt.dataset.capitol);
+        });
+
+    filtruCapitol.innerHTML = '<option value="">Toate capitolele</option>';
+    [...capitole.entries()].forEach(([id, titlu]) => {
+        filtruCapitol.insertAdjacentHTML('beforeend', `<option value="${id}">${escHtml(titlu)}</option>`);
+    });
+
+    if ([...capitole.keys()].includes(capitolCurent)) {
+        filtruCapitol.value = capitolCurent;
+    }
+}
+
+function actualizeazaStilLectieSelectata() {
+    const opt = selectLectie?.selectedOptions?.[0];
+    const esteTraditii = opt?.dataset?.tip === 'Traditii';
+
+    selectLectie?.classList.toggle('admin-input-traditii', esteTraditii);
+    lectieTipHint?.classList.toggle('hidden', !esteTraditii);
+}
+
+function aplicaFiltruLectii() {
+    const tip = filtruTipLectie?.value || '';
+    const perioada = filtruPerioada?.value || '';
+    const capitol = filtruCapitol?.value || '';
+
+    [...selectLectie.options].forEach(opt => {
+        if (opt.value === '0') {
+            opt.hidden = false;
+            opt.disabled = false;
+            return;
+        }
+
+        const vizibil =
+            (!tip || opt.dataset.tip === tip) &&
+            (!perioada || opt.dataset.perioadaId === perioada) &&
+            (!capitol || opt.dataset.capitolId === capitol);
+
+        opt.hidden = !vizibil;
+        opt.disabled = !vizibil;
+    });
+
+    const selectata = selectLectie.selectedOptions[0];
+    if (selectata && selectata.value !== '0' && selectata.disabled) {
+        selectLectie.value = '0';
+    }
+
+    actualizeazaStilLectieSelectata();
+    updateQuizPreview();
+}
+
+function sincronizeazaFiltreDinLectieSelectata() {
+    const opt = selectLectie?.selectedOptions?.[0];
+    if (!opt || opt.value === '0') return;
+
+    filtruTipLectie.value = opt.dataset.tip || '';
+    populateazaPerioade();
+
+    filtruPerioada.value = opt.dataset.perioadaId || '';
+    populateazaCapitole();
+
+    filtruCapitol.value = opt.dataset.capitolId || '';
+    aplicaFiltruLectii();
+}
+
+filtruTipLectie?.addEventListener('change', () => {
+    populateazaPerioade();
+    populateazaCapitole();
+    aplicaFiltruLectii();
+});
+
+filtruPerioada?.addEventListener('change', () => {
+    populateazaCapitole();
+    aplicaFiltruLectii();
+});
+
+filtruCapitol?.addEventListener('change', aplicaFiltruLectii);
+
+selectLectie?.addEventListener('change', () => {
+    sincronizeazaFiltreDinLectieSelectata();
+    actualizeazaStilLectieSelectata();
+});
+
+if (dateLaIncarcare) {
+    quizId = dateLaIncarcare.idQuiz;
+    document.getElementById('idLectie').value = dateLaIncarcare.idLectie;
+    sincronizeazaFiltreDinLectieSelectata();
+
+    document.getElementById('titlu').value = dateLaIncarcare.titlu;
+    document.getElementById('xpCompletare').value = dateLaIncarcare.xpCompletare;
+    document.getElementById('feedback').value = dateLaIncarcare.feedback ?? '';
+
+    (dateLaIncarcare.intrebari || []).forEach(i => adaugaIntrebare(i));
+    actualizeazaTimpTotal();
+}
+
+if (!dateLaIncarcare) {
+    populateazaPerioade();
+    populateazaCapitole();
+    aplicaFiltruLectii();
+}
+
+function adaugaIntrebare(date = null) {
+    const idx = nrIntrebare++;
+    const idIntrebare = date?.idIntrebare ?? 0;
+    const tip = date?.tip ?? 'Grila';
+
+    const div = document.createElement('div');
+    div.className = 'admin-intrebare';
+    div.id = `intrebare-${idx}`;
+    div.dataset.idIntrebare = idIntrebare;
+
+    div.innerHTML = `
+        <button type="button" onclick="stergeIntrebare(${idx})"
+                class="absolute top-3 right-3 text-amber-400 hover:text-red-400 text-xl font-bold leading-none"
+                title="Șterge întrebarea">×</button>
+
+        <div class="flex items-center gap-3 mb-4">
+            <span class="admin-badge nrOrdine"></span>
+            <select onchange="schimbaTip(${idx}, this.value)"
+                    class="admin-input text-sm flex-1 max-w-xs">
+                <option value="Grila" ${tip === 'Grila' ? 'selected' : ''}>☑ Grilă</option>
+                <option value="AdevaratFals" ${tip === 'AdevaratFals' ? 'selected' : ''}>⊙ Adevărat / Fals</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <input type="text" placeholder="Textul întrebării..."
+                   class="admin-input w-full campText"
+                   value="${escHtml(date?.text ?? '')}" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div>
+                <label class="admin-label text-xs">Timp (s)</label>
+                <input type="number" min="0" placeholder="ex: 30"
+                       class="admin-input text-sm campTimp"
+                       value="${date?.timp ?? ''}"
+                       onchange="actualizeazaTimpTotal(); updateQuizPreview();" />
+            </div>
+            <div>
+                <label class="admin-label text-xs">URL Imagine <span class="text-amber-700">(opțional)</span></label>
+                <input type="text" placeholder="Poze/imagine.png"
+                       class="admin-input text-sm campUrlImagine"
+                       value="${escHtml(date?.urlImagine ?? '')}" />
+            </div>
+        </div>
+
+        <div class="listaVariante space-y-2 mb-4"></div>
+
+        <button type="button" onclick="adaugaVarianta(${idx})"
+                class="adaugaVariantaBtn text-sm text-amber-400 hover:text-amber-300 font-semibold">
+            ＋ Adaugă variantă
+        </button>
+    `;
+
+    document.getElementById('listaIntrebari').appendChild(div);
+    actualizeazaNumerotare();
+    actualizeazaTimpTotal();
+
+    const varianteDeAdaugat = date?.variante?.length
+        ? date.variante
+        : tip === 'AdevaratFals'
+            ? [{idVarianta:0,text:'Adevărat',corect:true,punctaj:10},{idVarianta:0,text:'Fals',corect:false,punctaj:0}]
+            : [];
+
+    varianteDeAdaugat.forEach(v => adaugaVarianta(idx, v));
+
+    if (tip === 'AdevaratFals') {
+        document.querySelector(`#intrebare-${idx} .adaugaVariantaBtn`).classList.add('hidden');
+    }
+
+    updateQuizPreview();
+}
+
+function schimbaTip(idx, tip) {
+    const div = document.getElementById(`intrebare-${idx}`);
+    const listaVariante = div.querySelector('.listaVariante');
+    const btnAdauga = div.querySelector('.adaugaVariantaBtn');
+
+    listaVariante.innerHTML = '';
+
+    if (tip === 'AdevaratFals') {
+        btnAdauga.classList.add('hidden');
+        adaugaVarianta(idx, {idVarianta:0, text:'Adevărat', corect:true, punctaj:10});
+        adaugaVarianta(idx, {idVarianta:0, text:'Fals', corect:false, punctaj:0});
+    } else {
+        btnAdauga.classList.remove('hidden');
+        adaugaVarianta(idx);
+        adaugaVarianta(idx);
+    }
+
+    updateQuizPreview();
+}
+
+function adaugaVarianta(idxIntrebare, date = null) {
+    const div = document.getElementById(`intrebare-${idxIntrebare}`);
+    const lista = div.querySelector('.listaVariante');
+    const tip = div.querySelector('select').value;
+    const esteAdevaratFals = tip === 'AdevaratFals';
+
+    const vDiv = document.createElement('div');
+    vDiv.className = 'admin-varianta';
+    vDiv.dataset.idVarianta = date?.idVarianta ?? 0;
+
+    vDiv.innerHTML = `
+        <input type="checkbox" class="campCorect w-4 h-4 accent-amber-500 cursor-pointer"
+               title="Răspuns corect" ${date?.corect ? 'checked' : ''} />
+        <input type="text" placeholder="Textul variantei..."
+               class="flex-1 bg-transparent border-b border-amber-700 focus:border-amber-500 outline-none text-sm py-0.5 text-amber-100 campTextVarianta ${esteAdevaratFals ? 'text-amber-600' : ''} placeholder-amber-800"
+               value="${escHtml(date?.text ?? '')}" ${esteAdevaratFals ? 'readonly' : ''} />
+        <input type="number" min="0" placeholder="XP"
+               class="admin-input w-16 text-sm text-center campPunctaj"
+               value="${date?.punctaj ?? 0}" title="Punctaj" />
+        ${!esteAdevaratFals ? `<button type="button" onclick="this.closest('[data-id-varianta]').remove(); updateQuizPreview();"
+                class="text-amber-600 hover:text-red-400 text-lg leading-none font-bold" title="Șterge">×</button>` : ''}
+    `;
+
+    lista.appendChild(vDiv);
+    updateQuizPreview();
+}
+
+function stergeIntrebare(idx) {
+    const div = document.getElementById(`intrebare-${idx}`);
+    if (div) {
+        div.remove();
+        actualizeazaNumerotare();
+        actualizeazaTimpTotal();
+        updateQuizPreview();
+    }
+}
+
+function actualizeazaNumerotare() {
+    document.querySelectorAll('#listaIntrebari > div').forEach((div, i) => {
+        const badge = div.querySelector('.nrOrdine');
+        if (badge) badge.textContent = `Întrebarea ${i + 1}`;
+    });
+}
+
+function actualizeazaTimpTotal() {
+    let totalTimp = 0;
+    document.querySelectorAll('#listaIntrebari > div').forEach(div => {
+        const timpVal = div.querySelector('.campTimp').value;
+        if (timpVal) {
+            totalTimp += parseInt(timpVal);
+        }
+    });
+    document.getElementById('timpQuiz').value = totalTimp;
+}
+
+function colecteazaDate() {
+    const intrebariDate = [];
+    document.querySelectorAll('#listaIntrebari > div').forEach(div => {
+        const varianteDate = [];
+        div.querySelectorAll('.listaVariante > div').forEach(vDiv => {
+            varianteDate.push({
+                idVarianta: parseInt(vDiv.dataset.idVarianta) || 0,
+                text: vDiv.querySelector('.campTextVarianta').value.trim(),
+                corect: vDiv.querySelector('.campCorect').checked,
+                punctaj: parseInt(vDiv.querySelector('.campPunctaj').value) || 0
+            });
+        });
+
+        const timpVal = div.querySelector('.campTimp').value;
+        intrebariDate.push({
+            idIntrebare: parseInt(div.dataset.idIntrebare) || 0,
+            text: div.querySelector('.campText').value.trim(),
+            tip: div.querySelector('select').value,
+            timp: timpVal ? parseInt(timpVal) : null,
+            urlImagine: div.querySelector('.campUrlImagine').value.trim(),
+            variante: varianteDate
+        });
+    });
+    return intrebariDate;
+}
+
+function valideaza(payload) {
+    if (!payload.titlu) return 'Titlul quiz-ului este obligatoriu.';
+    if (payload.idLectie <= 0) return 'Selectează o lecție.';
+    if (!payload.intrebari.length) return 'Adaugă cel puțin o întrebare.';
+
+    for (let i = 0; i < payload.intrebari.length; i++) {
+        const intr = payload.intrebari[i];
+        if (!intr.text) return `Întrebarea ${i + 1}: textul este obligatoriu.`;
+        if (!intr.variante.length) return `Întrebarea ${i + 1}: adaugă cel puțin o variantă.`;
+        const areCorect = intr.variante.some(v => v.corect);
+        if (!areCorect) return `Întrebarea ${i + 1}: marchează cel puțin un răspuns corect.`;
+        for (const v of intr.variante) {
+            if (!v.text) return `Întrebarea ${i + 1}: toate variantele trebuie să aibă text.`;
+        }
+    }
+    return null;
+}
+
+async function salveaza() {
+    const payload = {
+        idQuiz: quizId,
+        idLectie: parseInt(document.getElementById('idLectie').value) || 0,
+        titlu: document.getElementById('titlu').value.trim(),
+        xpCompletare: parseInt(document.getElementById('xpCompletare').value) || 0,
+        feedback: document.getElementById('feedback').value.trim(),
+        intrebari: colecteazaDate()
+    };
+
+    const eroareClient = valideaza(payload);
+    if (eroareClient) { afiseazaAlerta(eroareClient, false); return; }
+
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+    try {
+        const resp = await fetch('?handler=Salveaza', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': token
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const json = await resp.json();
+        if (json.ok) {
+            window.location.href = '/Admin/Quizuri';
+        } else {
+            afiseazaAlerta(json.eroare ?? 'Eroare la salvare.', false);
+        }
+    } catch (e) {
+        afiseazaAlerta('Eroare de rețea. Încearcă din nou.', false);
+    }
+}
+
+function normalizeUrl(url) {
+    let u = (url || '').trim().replace(/\\/g, '/');
+    if (u && !u.startsWith('http://') && !u.startsWith('https://') && !u.startsWith('/')) {
+        u = '/' + u;
+    }
+    return u;
+}
+
+function updateQuizPreview() {
+    const titlu = document.getElementById('titlu')?.value.trim() || 'Quiz fără titlu';
+    const lectieSelect = document.getElementById('idLectie');
+    const lectieText = lectieSelect?.selectedOptions?.[0]?.text || 'Lecție neselectată';
+    const xp = parseInt(document.getElementById('xpCompletare')?.value) || 0;
+    const timp = parseInt(document.getElementById('timpQuiz')?.value) || 0;
+    const feedback = document.getElementById('feedback')?.value.trim();
+
+    document.getElementById('previewQuizTitlu').textContent = titlu;
+
+    const intrebariDate = colecteazaDate();
+    let html = `
+        <div style="font-size:12px; color:#6A3510; margin-bottom:14px;">
+            Base de date: 📖 ${escHtml(lectieText)}
+            <br/>
+            ⭐ ${xp} XP &nbsp;·&nbsp; ⏱ ${timp}s &nbsp;·&nbsp; ${intrebariDate.length} întrebări
+        </div>
+    `;
+
+    if (intrebariDate.length === 0) {
+        html += `<p style="color:#8A5030; font-style:italic;">Adaugă întrebări pentru a vedea preview-ul...</p>`;
+        document.getElementById('previewQuizBody').innerHTML = html;
+        return;
+    }
+
+    intrebariDate.forEach((intr, index) => {
+        const img = intr.urlImagine
+            ? `<img src="${escHtml(normalizeUrl(intr.urlImagine))}" class="quiz-preview-img" onerror="this.style.display='none'" />`
+            : '';
+
+        const variante = intr.variante.map(v => `
+            <div class="quiz-preview-option ${v.corect ? 'correct' : ''}">
+                <span>${v.corect ? '✓' : '○'}</span>
+                <span style="flex:1;">${escHtml(v.text || 'Variantă fără text')}</span>
+                <span style="font-size:11px; color:#7A4A20;">${v.punctaj || 0} pct</span>
+            </div>
+        `).join('');
+
+        html += `
+            <div class="quiz-preview-question">
+                <div style="font-family:'Cinzel',serif; font-size:12px; color:#8B2800; font-weight:700; margin-bottom:6px;">
+                    Întrebarea ${index + 1} · ${intr.tip === 'AdevaratFals' ? 'Adevărat/Fals' : 'Grilă'} · ${intr.timp ?? 5}s
+                </div>
+                <div style="font-weight:700; margin-bottom:8px;">
+                    ${escHtml(intr.text || 'Întrebare fără text')}
+                </div>
+                ${img}
+                ${variante || '<div style="color:#8A5030; font-style:italic;">Fără variante.</div>'}
+            </div>
+        `;
+    });
+
+    if (feedback) {
+        html += `
+            <div style="margin-top:12px; padding:10px; border-radius:8px; background:rgba(90,18,0,.1); color:#5A1200;">
+                💡 ${escHtml(feedback)}
+            </div>
+        `;
+    }
+
+    document.getElementById('previewQuizBody').innerHTML = html;
+}
+
+function afiseazaAlerta(mesaj, succes) {
+    const el = document.getElementById('alerta');
+    el.textContent = mesaj;
+    el.className = `mb-4 px-4 py-3 rounded-lg text-sm font-medium ${succes ? 'bg-green-900 text-green-300 border border-green-700' : 'bg-red-900 text-red-300 border border-red-700'}`;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function escHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+document.addEventListener('input', e => {
+    if (e.target.closest('.admin-container')) {
+        actualizeazaTimpTotal();
+        updateQuizPreview();
+    }
+});
+
+document.addEventListener('change', e => {
+    if (e.target.closest('.admin-container')) {
+        actualizeazaTimpTotal();
+        updateQuizPreview();
+    }
+});
+
+actualizeazaTimpTotal();
+updateQuizPreview();
+</script>
+}

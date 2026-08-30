@@ -1,0 +1,109 @@
+@using HistoryConnect.Models
+@model HistoryConnect.Pages.IndexModel
+
+@* Tab buttons strip *@
+<div class="border-b border-(--tabs-border) overflow-x-auto transition-[background,border-color] duration-[400ms]"
+     style="background:var(--tabs-bg);">
+    <div class="flex whitespace-nowrap px-2 max-w-[1280px] mx-auto">
+        <button class="tab-btn px-[clamp(10px,2vw,18px)] py-3 bg-transparent border-0 border-b-[3px] border-transparent
+                       cursor-pointer font-semibold transition-all duration-200 tracking-[.03em]
+                       hover:text-(--tab-hover-text)"
+                style="font-family:'Cinzel',serif; font-size:clamp(10.5px,1.4vw,12.5px); color:var(--tab-inactive-text);"
+                data-tab="overview">
+            📋 Privire de Ansamblu
+        </button>
+        <button class="tab-btn px-[clamp(10px,2vw,18px)] py-3 bg-transparent border-0 border-b-[3px] border-transparent
+                       cursor-pointer font-semibold transition-all duration-200 tracking-[.03em]
+                       hover:text-(--tab-hover-text)"
+                style="font-family:'Cinzel',serif; font-size:clamp(10.5px,1.4vw,12.5px); color:var(--tab-inactive-text);"
+                data-tab="events">
+            📅 Evenimente
+        </button>
+        <button class="tab-btn px-[clamp(10px,2vw,18px)] py-3 bg-transparent border-0 border-b-[3px] border-transparent
+                       cursor-pointer font-semibold transition-all duration-200 tracking-[.03em]
+                       hover:text-(--tab-hover-text)"
+                style="font-family:'Cinzel',serif; font-size:clamp(10.5px,1.4vw,12.5px); color:var(--tab-inactive-text);"
+                data-tab="quiz">
+            🎯 Quiz
+        </button>
+    </div>
+</div>
+
+@* Tab panels container *@
+<div>
+
+    @* Overview tab *@
+    <div class="tab-panel active" id="overview">
+        @if (Model.AfiseazaLectie && Model.LectieActiva != null && Model.AccesPermis)
+        {
+            <partial name="_LessonReader" model="Model" />
+        }
+        else
+        {
+            <partial name="_TabContent" model="Model" />
+        }
+    </div>
+
+    @* Events (timeline) tab *@
+    <div class="tab-panel" id="events">
+        @{
+            var toateLectiile = Model.PerioadaSelectata?.Capitole
+                .OrderBy(c => c.NrOrdine)
+                .SelectMany(c => c.Lectii
+                    .Where(l => l.AnEveniment.HasValue && l.Tip == Model.CategorieCurenta)
+                    .OrderBy(l => l.AnEveniment))
+                .ToList();
+        }
+
+        @if (toateLectiile?.Count > 0)
+        {
+            <div class="relative pt-[10px] pb-[10px] max-w-[850px] mx-auto px-5 mt-6 timeline">
+                @foreach (Lectie lectie in toateLectiile)
+                {
+                    var anText = lectie.AnEveniment < 0
+                        ? $"{Math.Abs(lectie.AnEveniment!.Value)} i.Hr."
+                        : $"{lectie.AnEveniment} d.Hr.";
+
+                    <div class="relative flex items-start gap-5 mb-5 pl-[10px]">
+                        @* Timeline dot / date badge *@
+                        <div class="flex-shrink-0 min-w-[82px] h-9 rounded-[20px] border-2 border-(--accent) flex items-center justify-center relative z-[1]
+                                    shadow-[0_0_12px_var(--accent-soft)] px-2 text-center whitespace-nowrap"
+                             style="background:var(--avatar-bg); font-family:'Cinzel',serif; font-size:10px; font-weight:700; color:var(--gold-light);">
+                            @anText
+                        </div>
+
+                        @* Timeline card *@
+                        <div class="flex-1 rounded-[10px] border p-[14px_18px] transition-all duration-[220ms]
+                                    hover:translate-x-1 hover:shadow-[0_4px_20px_rgba(0,0,0,.3)]"
+                             style="background:var(--bg-lesson); border-color:var(--border-lesson);"
+                             onmouseenter="this.style.background='var(--bg-lesson-hover)'; this.style.borderColor='var(--border-lesson-hover)'"
+                             onmouseleave="this.style.background='var(--bg-lesson)'; this.style.borderColor='var(--border-lesson)'">
+                            <div class="font-bold mb-[6px]"
+                                 style="font-family:'Cinzel',serif; font-size:clamp(13px,1.8vw,15px); color:var(--gold-light);">
+                                @lectie.Titlu
+                            </div>
+                            <div class="text-[12px] leading-[1.6]" style="color:var(--timeline-desc-color);">
+                                @(lectie.Continut?.Length > 120 ? lectie.Continut[..120] + "..." : lectie.Continut)
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="max-w-[850px] mx-auto px-5 mt-6">
+                <div class="rounded-lg border-2 p-9 text-center"
+                     style="background:var(--bg-lesson); border-color:var(--border-lesson);">
+                    <p style="color:var(--gold-light); font-family:'Cinzel',serif;">Selectează o perioadă pentru a vedea evenimentele.</p>
+                </div>
+            </div>
+        }
+    </div>
+
+    @* Quiz tab *@
+    <div class="tab-panel" id="quiz">
+        <partial name="_Quiz" model="Model" />
+    </div>
+
+</div>

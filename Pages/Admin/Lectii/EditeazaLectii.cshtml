@@ -1,0 +1,438 @@
+@page "/Admin/Lectii/Editeaza"
+@model HistoryConnect.Pages.Admin.Lectii.EditeazaLectieModel
+@{
+    ViewData["Title"] = Model.EsteEditare ? "Editează Lecție" : "Lecție Nouă";
+}
+
+<style>
+    .admin-container {
+        background: linear-gradient(135deg, #0a0500 0%, #1a0f08 100%);
+        min-height: 100vh;
+        padding: 2rem 1rem;
+    }
+
+    .admin-input {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(200, 100, 0, 0.3);
+        color: #E8D4B8;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        transition: all 0.2s;
+        color-scheme: dark;
+    }
+    .admin-input option {
+    background: #1a0f08;
+    color: #E8D4B8;
+}
+.admin-input option:checked {
+    background: #7c2d12;
+    color: #FFE898;
+}
+.admin-input-traditii option {
+    background: #1b1028;
+    color: #e9d5ff;
+}
+
+.admin-input-traditii option:checked {
+    background: #6b21a8;
+    color: #f3e8ff;
+}
+
+    .admin-input:focus {
+        outline: none;
+        border-color: rgba(255, 165, 0, 0.6);
+        box-shadow: 0 0 10px rgba(255, 165, 0, 0.3);
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .admin-input::placeholder { color: rgba(200, 120, 80, 0.6); }
+
+    .admin-label {
+        color: #FFD580;
+        font-weight: 500;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .admin-card {
+        background: rgba(26, 15, 8, 0.8);
+        border: 1px solid rgba(200, 100, 0, 0.2);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+    }
+
+    /* ── Preview panel ── */
+    #preview-panel {
+        background: linear-gradient(135deg, #fff0d4, #e6c898);
+        border-radius: 10px;
+        overflow: hidden;
+        color: #380C00;
+        font-family: 'IM Fell English', Georgia, serif;
+        font-size: 15px;
+        line-height: 1.7;
+        min-height: 200px;
+    }
+
+    #preview-header {
+        padding: 14px 20px;
+        background: linear-gradient(135deg, #5A1200, #9A2800, #C03800);
+        border-bottom: 3px solid #FF6020;
+        font-family: 'Cinzel', serif;
+        color: #FFE898;
+        font-size: 15px;
+        font-weight: bold;
+    }
+
+    #preview-body {
+        padding: 24px 28px;
+    }
+
+    #preview-body img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        display: block;
+        margin-bottom: 16px;
+    }
+
+    #preview-body > div:has(img) {
+        display: inline-block;
+        max-width: 100%;
+        margin-bottom: 16px;
+    }
+
+    #preview-body p {
+        margin-bottom: 14px;
+        color: #380C00;
+    }
+
+    /* Hint tag pentru inserare imagine */
+    .img-hint {
+        font-size: 11px;
+        color: #a07050;
+        margin-top: 4px;
+    }
+
+    /* Buton inserare URL in continut */
+    #btn-insereaza {
+        background: rgba(200,100,0,0.15);
+        border: 1px solid rgba(200,100,0,0.4);
+        color: #FFD580;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: background 0.2s;
+        white-space: nowrap;
+    }
+    #btn-insereaza:hover { background: rgba(200,100,0,0.3); }
+
+    /* Indicator imagine validata */
+    #img-status { font-size: 12px; margin-top: 6px; min-height: 18px; }
+    #img-preview-thumb {
+        margin-top: 8px;
+        max-height: 80px;
+        max-width: 200px;
+        border-radius: 6px;
+        display: none;
+        object-fit: cover;
+        border: 1px solid rgba(200,100,0,0.3);
+    }
+</style>
+
+<div class="admin-container">
+    <div style="max-width:1200px; margin:0 auto;">
+
+        <div class="mb-8">
+            <a href="/Admin/Lectii" class="text-amber-500 hover:text-amber-300 text-sm font-medium transition-colors mb-4 inline-flex items-center gap-1">
+                ← Înapoi la Lecții
+            </a>
+            <h1 class="text-4xl font-bold text-amber-300 mt-2 flex items-center gap-3">
+                @(Model.EsteEditare ? "✏️ Editează Lecție" : "➕ Lecție Nouă")
+            </h1>
+            <p class="text-amber-700 text-sm mt-2">
+                Completează formularul. <strong style="color:#c8864a;">Preview-ul</strong> din dreapta se actualizează automat.
+            </p>
+        </div>
+
+        @* Layout 2 coloane: formular stânga, preview dreapta *@
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start;">
+
+            @* ── COLOANA STÂNGA: formular ── *@
+            <div class="admin-card">
+                <form method="post" class="space-y-5">
+                    <input type="hidden" asp-for="Input.IdLectie" />
+
+                    @if (!ViewData.ModelState.IsValid)
+{
+    <div asp-validation-summary="All"
+         class="rounded-lg border border-red-600 bg-red-900/30 p-3 text-sm text-red-300">
+    </div>
+}
+
+                    <div>
+                        <label asp-for="Input.IdCapitol" class="admin-label">Capitol</label>
+                        <select asp-for="Input.IdCapitol" asp-items="Model.CapitoleSelectie"
+                                class="admin-input w-full">
+                            <option value="">— Selectează capitol —</option>
+                        </select>
+                        <span asp-validation-for="Input.IdCapitol" class="text-red-400 text-xs mt-1 block"></span>
+                    </div>
+
+                    <div>
+                        <label asp-for="Input.Titlu" class="admin-label">Titlu</label>
+                        <input id="input-titlu" asp-for="Input.Titlu" class="admin-input w-full"
+                               placeholder="Ex: Formarea României Moderne" />
+                        <span asp-validation-for="Input.Titlu" class="text-red-400 text-xs mt-1 block"></span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label asp-for="Input.Tip" class="admin-label">Tip</label>
+                            <select asp-for="Input.Tip"
+                                    asp-items="Html.GetEnumSelectList<HistoryConnect.Models.TipLectie>()"
+                                    class="admin-input w-full">
+                            </select>
+                        </div>
+                        <div>
+                            <label asp-for="Input.Ordine" class="admin-label">Ordine afișare</label>
+                            <input asp-for="Input.Ordine" type="number" min="1" class="admin-input w-full" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label asp-for="Input.AnEveniment" class="admin-label">
+                            An eveniment <span class="text-amber-700 font-normal">(opțional)</span>
+                        </label>
+                        <input asp-for="Input.AnEveniment" type="number" class="admin-input w-full" placeholder="ex: 1918" />
+                    </div>
+
+                    @* ── URL Imagine cu preview thumb + buton inserare ── *@
+                    <div>
+                        <label asp-for="Input.UrlImagine" class="admin-label">
+                            URL Imagine <span class="text-amber-700 font-normal">(opțional)</span>
+                        </label>
+                        <div style="display:flex; gap:8px; align-items:flex-start;">
+                            <input id="input-imagine" asp-for="Input.UrlImagine"
+                                   class="admin-input w-full"
+                                   placeholder="https://... sau /images/poza.jpg" />
+                            <button type="button" id="btn-insereaza" title="Inserează URL-ul în conținut la poziția cursorului">
+                                📌 Inserează în text
+                            </button>
+                        </div>
+                        <div id="img-status"></div>
+                        <img id="img-preview-thumb" alt="preview" />
+                        <p class="img-hint">
+                            💡 Poza apare automat dacă URL-ul e setat. Sau apasă <strong>📌 Inserează în text</strong>
+                            ca să o plasezi exact unde vrei în conținut (pe linie separată).
+                        </p>
+                    </div>
+
+                    @* ── Conținut ── *@
+                    <div>
+                        <label asp-for="Input.Continut" class="admin-label">Conținut</label>
+                        <textarea id="input-continut" asp-for="Input.Continut" rows="16"
+                                  class="admin-input w-full font-mono text-sm"
+                                  placeholder="Scrie textul lecției...&#10;&#10;URL-urile de imagini pe linii separate vor fi afișate ca imagini în lecție.&#10;Ex: https://upload.wikimedia.org/wikipedia/commons/..."></textarea>
+                    </div>
+
+                    <div class="flex gap-3 pt-4 border-t border-amber-900">
+                        <button type="submit"
+                                class="px-6 py-2.5 rounded-lg font-semibold transition-all duration-200 bg-linear-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-lg hover:shadow-orange-500/50">
+                            @(Model.EsteEditare ? "💾 Salvează modificările" : "✅ Adaugă lecția")
+                        </button>
+                        <a href="/Admin/Lectii" class="px-6 py-2.5 rounded-lg font-semibold transition-all duration-200 bg-gray-700 hover:bg-gray-600 text-gray-200">
+                            Anulează
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            @* ── COLOANA DREAPTA: preview live ── *@
+            <div style="position:sticky; top:24px;">
+                <div style="color:#FFD580; font-size:13px; font-weight:600; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+                    👁 Preview live
+                    <span style="font-weight:400; color:#a07050; font-size:11px;">(se actualizează pe măsură ce scrii)</span>
+                </div>
+
+                @* Titlu preview *@
+                <h2 id="preview-titlu"
+                    style="font-family:'Cinzel',serif; font-size:clamp(16px,2.5vw,22px);
+                           color:#f5d78e; font-weight:bold; text-shadow:0 2px 10px rgba(0,0,0,.8);
+                           margin-bottom:16px;">
+                    &nbsp;
+                </h2>
+
+                @* Card preview *@
+                <div id="preview-panel">
+                    <div id="preview-header">📖 &nbsp;<span id="preview-header-titlu"></span></div>
+                    <div id="preview-body">
+                        <p style="color:#a07050; font-style:italic; font-size:13px;">Începe să scrii pentru a vedea preview-ul...</p>
+                    </div>
+                </div>
+
+                @* Legenda *@
+                <div style="margin-top:14px; padding:12px 16px; background:rgba(200,100,0,0.08);
+                            border:1px solid rgba(200,100,0,0.2); border-radius:8px; font-size:12px; color:#a07050; line-height:1.7;">
+                    <strong style="color:#FFD580;">Cum să plasezi imagini:</strong><br/>
+                    • <strong style="color:#E8D4B8;">URL Imagine</strong> → apare ca banner în partea de sus<br/>
+                    • <strong style="color:#E8D4B8;">📌 Inserează în text</strong> → pune URL-ul exact unde e cursorul în conținut<br/>
+                    • Poți scrie direct un URL de imagine pe o linie separată în conținut
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const inputTitlu    = document.getElementById('input-titlu');
+    const inputImagine  = document.getElementById('input-imagine');
+    const inputContinut = document.getElementById('input-continut');
+
+    const prevTitlu       = document.getElementById('preview-titlu');
+    const prevHeaderTitlu = document.getElementById('preview-header-titlu');
+    const prevBody        = document.getElementById('preview-body');
+    const imgThumb        = document.getElementById('img-preview-thumb');
+    const imgStatus       = document.getElementById('img-status');
+
+
+    function normalizeUrl(url) {
+        let u = (url || '').trim().replace(/\\/g, '/');
+
+        if (u && !u.startsWith('http://') && !u.startsWith('https://') && !u.startsWith('/')) {
+            u = '/' + u;
+        }
+        return u;
+    }
+
+    function esteImagine(url) {
+        if (!url || url.trim() === '') return false;
+        const u = (url || '').replace(/\\/g, '/').toLowerCase().split('?')[0];
+        return /\.(jpg|jpeg|png|gif|webp|svg)$/.test(u);
+    }
+
+    function escHtml(s) {
+        return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+
+    function updatePreview() {
+        const titlu    = (inputTitlu?.value || '').trim();
+        const urlImg   = (inputImagine?.value || '').trim();
+        const continut = inputContinut?.value || '';
+
+        prevTitlu.textContent       = titlu || '\u00a0';
+        prevHeaderTitlu.textContent = titlu || '';
+
+        let html = '';
+
+
+        if (urlImg) {
+            const src = escHtml(normalizeUrl(urlImg));
+            html += `<div style="margin-bottom:16px; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.2);">
+                        <img src="${src}" alt="${escHtml(titlu)}"
+                             style="max-width:100%; height:auto; border-radius:8px; display:block;"
+                             onerror="this.style.display='none'" />
+                     </div>`;
+        }
+
+
+        const linii = continut.split('\n');
+        for (const linie of linii) {
+            const t = linie.trim();
+            if (t === '') continue;
+            if (esteImagine(t)) {
+                const src = escHtml(normalizeUrl(t));
+                html += `<div style="margin:16px 0; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.2);">
+                            <img src="${src}" alt="Imagine lecție"
+                                 style="max-width:100%; height:auto; border-radius:8px; display:block;"
+                                 onerror="this.style.display='none'; this.parentElement.style.display='none'" />
+                         </div>`;
+            } else {
+                html += `<p style="margin-bottom:12px; color:#380C00; font-family:'Georgia',serif; font-size:15px; line-height:1.7;">${escHtml(t)}</p>`;
+            }
+        }
+
+        if (html === '') {
+            html = '<p style="color:#a07050; font-style:italic; font-size:13px;">Începe să scrii pentru a vedea preview-ul...</p>';
+        }
+
+        prevBody.innerHTML = html;
+    }
+
+    let thumbTimeout;
+    function updateThumb() {
+        clearTimeout(thumbTimeout);
+        const url = (inputImagine?.value || '').trim();
+        if (!url) {
+            imgThumb.style.display = 'none';
+            imgStatus.innerHTML = '';
+            return;
+        }
+        imgStatus.innerHTML = '<span style="color:#a07050;">⏳ Se verifică...</span>';
+        thumbTimeout = setTimeout(() => {
+            imgThumb.src = normalizeUrl(url);
+            imgThumb.style.display = 'block';
+            imgThumb.onload  = () => { imgStatus.innerHTML = '<span style="color:#40c060;">✓ Imagine validă</span>'; };
+            imgThumb.onerror = () => {
+                imgThumb.style.display = 'none';
+                imgStatus.innerHTML = '<span style="color:#f87171;">✗ URL invalid sau imagine inaccesibilă</span>';
+            };
+        }, 600);
+    }
+
+    document.getElementById('btn-insereaza').addEventListener('click', () => {
+        const url = (inputImagine?.value || '').trim();
+        if (!url) {
+            imgStatus.innerHTML = '<span style="color:#f87171;">Introdu mai întâi un URL de imagine.</span>';
+            return;
+        }
+        const ta  = inputContinut;
+        const s   = ta.selectionStart;
+        const e   = ta.selectionEnd;
+        const val = ta.value;
+
+        const inainte = val.substring(0, s);
+        const dupa    = val.substring(e);
+        const prefix  = (inainte.length > 0 && !inainte.endsWith('\n')) ? '\n' : '';
+        const sufix   = (dupa.length > 0 && !dupa.startsWith('\n'))     ? '\n' : '';
+        const insert  = `${prefix}${url}${sufix}`;
+
+        ta.value = inainte + insert + dupa;
+        const newPos = s + insert.length;
+        ta.selectionStart = ta.selectionEnd = newPos;
+        ta.focus();
+        updatePreview();
+    });
+
+
+    inputTitlu?.addEventListener('input', updatePreview);
+    inputImagine?.addEventListener('input', () => { updateThumb(); updatePreview(); });
+    inputContinut?.addEventListener('input', updatePreview);
+
+
+    updatePreview();
+    updateThumb();
+
+    (function() {
+        const preview = document.querySelector('[style*="position:sticky"]');
+        if (!preview) return;
+        if (window.innerWidth < 900) {
+            preview.style.display = 'none';
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = '👁 Arată preview';
+            btn.style.cssText = 'margin-bottom:16px; padding:8px 18px; background:rgba(200,100,0,0.2); border:1px solid rgba(200,100,0,0.4); color:#FFD580; border-radius:8px; cursor:pointer; font-size:14px;';
+            let visible = false;
+            btn.addEventListener('click', () => {
+                visible = !visible;
+                preview.style.display = visible ? 'block' : 'none';
+                btn.textContent = visible ? '✕ Ascunde preview' : '👁 Arată preview';
+            });
+            document.querySelector('.admin-container').prepend(btn);
+        }
+    })();
+</script>

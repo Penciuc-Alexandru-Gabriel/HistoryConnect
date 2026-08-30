@@ -1,0 +1,163 @@
+@page "/Admin/Lectii"
+@model HistoryConnect.Pages.Admin.Lectii.LectiiIndexModel
+@{
+    ViewData["Title"] = "Gestionare Lecții";
+}
+
+<style>
+    .admin-list-container {
+        background: linear-gradient(135deg, #0a0500 0%, #1a0f08 100%);
+        min-height: 100vh;
+        padding: 2rem 1rem;
+    }
+    
+    .admin-table {
+        background: rgba(26, 15, 8, 0.8);
+        border: 1px solid rgba(200, 100, 0, 0.2);
+        border-radius: 0.75rem;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+    
+    .admin-table thead {
+        background: rgba(200, 100, 0, 0.15);
+        border-bottom: 1px solid rgba(200, 100, 0, 0.3);
+    }
+    
+    .admin-table th {
+        color: #FFD580;
+        font-weight: 600;
+        padding: 0.75rem 1rem;
+    }
+    
+    .admin-table td {
+        color: #D4C4A8;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(200, 100, 0, 0.15);
+    }
+    
+    .admin-table tbody tr:hover {
+        background: rgba(200, 100, 0, 0.1);
+    }
+    
+    .admin-badge-info {
+        display: inline-block;
+        background: rgba(255, 165, 0, 0.2);
+        color: #FFD580;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid rgba(255, 165, 0, 0.4);
+    }
+    .admin-row-traditii {
+    background: rgba(88, 28, 135, 0.16);
+}
+
+.admin-row-traditii:hover {
+    background: rgba(126, 34, 206, 0.22) !important;
+}
+
+.admin-row-traditii td {
+    border-bottom-color: rgba(168, 85, 247, 0.22);
+}
+
+.admin-badge-traditii {
+    background: rgba(168, 85, 247, 0.18);
+    color: #e9d5ff;
+    border-color: rgba(192, 132, 252, 0.45);
+}
+
+.admin-title-traditii {
+    color: #e9d5ff !important;
+}
+</style>
+
+<div class="admin-list-container">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <a href="/Admin" class="text-amber-500 hover:text-amber-300 text-sm font-medium transition-colors inline-flex items-center gap-1">← Dashboard</a>
+                <h1 class="text-4xl font-bold text-amber-300 mt-3 flex items-center gap-3">📚 Gestionare Lecții</h1>
+                <p class="text-amber-700 text-sm mt-2">Administrează toate lecțiile din platformă</p>
+            </div>
+            <a href="/Admin/Lectii/Editeaza" class="px-6 py-2.5 rounded-lg font-semibold transition-all duration-200 bg-linear-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-lg hover:shadow-orange-500/50">
+                + Lecție nouă
+            </a>
+        </div>
+
+        @if (TempData["Mesaj"] != null)
+        {
+            <div class="bg-green-900 text-green-300 px-4 py-3 rounded-lg mb-6 border border-green-700">✓ @TempData["Mesaj"]</div>
+        }
+
+        @foreach (var perioada in Model.Perioade)
+        {
+            <div class="mb-10">
+                <h2 class="text-2xl font-bold text-amber-300 mb-5 flex items-center gap-2">
+                    🕰 @perioada.Nume
+                    @if (perioada.Inceput.HasValue)
+                    {
+                        <span class="text-sm font-normal text-amber-600">(@perioada.Inceput — @perioada.Sfarsit)</span>
+                    }
+                </h2>
+
+                @foreach (var capitol in perioada.Capitole.OrderBy(c => c.NrOrdine))
+                {
+                    <div class="mb-6 ml-4">
+                        <h3 class="text-lg font-semibold text-amber-200 mb-3 flex items-center gap-2">📂 @capitol.Titlu</h3>
+
+                        @if (!capitol.Lectii.Any())
+                        {
+                            <p class="text-sm text-amber-700 ml-4 italic">Nicio lecție în acest capitol.</p>
+                        }
+                        else
+                        {
+                            <div class="admin-table">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-left">Titlu</th>
+                                            <th class="text-left">Tip</th>
+                                            <th class="text-center">Ordine</th>
+                                            <th class="text-center">An</th>
+                                            <th class="text-right">Acțiuni</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var lectie in capitol.Lectii.OrderBy(l => l.Ordine))
+{
+    var esteTraditii = lectie.Tip == HistoryConnect.Models.TipLectie.Traditii;
+
+    <tr class="@(esteTraditii ? "admin-row-traditii" : "")">
+        <td class="font-medium @(esteTraditii ? "admin-title-traditii" : "text-amber-100")">
+            @lectie.Titlu
+        </td>
+        <td>
+            <span class="admin-badge-info @(esteTraditii ? "admin-badge-traditii" : "")">
+                @(esteTraditii ? "🎭 Tradiții" : "📜 Istorie")
+            </span>
+        </td>
+        <td class="text-center text-amber-600 font-medium">@lectie.Ordine</td>
+        <td class="text-center text-amber-600">@(lectie.AnEveniment?.ToString() ?? "—")</td>
+        <td class="text-right space-x-3 flex justify-end">
+            <a href="/Admin/Lectii/Editeaza?id=@lectie.IdLectie"
+               class="text-amber-400 hover:text-amber-300 font-semibold transition-colors">✏ Editează</a>
+            <form method="post" asp-page-handler="Sterge" class="inline"
+                  onsubmit="return confirm('Ștergi lecția «@lectie.Titlu»? Toate quizurile asociate vor fi șterse.')">
+                <input type="hidden" name="idLectie" value="@lectie.IdLectie" />
+                <button type="submit" class="text-red-400 hover:text-red-300 font-semibold transition-colors">✕ Șterge</button>
+            </form>
+        </td>
+    </tr>
+}
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

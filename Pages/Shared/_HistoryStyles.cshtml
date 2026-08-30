@@ -1,0 +1,250 @@
+@* _HistoryStyles.cshtml – CSS tokens, keyframes, JS-toggled states & pseudo-elements only *@
+
+<style>
+    /* ── 1. DESIGN TOKENS – TEMA ISTORIE (Default) ── */
+    :root {
+        --bg-global:         #0d0200;
+        --fire-dark:         #100200;
+        --fire-mid:          #8A3500;
+        --fire-bright:       #C84000;
+        --accent:            #FF7030;
+        --accent-soft:       rgba(255,112,48,0.2);
+
+        --gold:              #FFD060;
+        --gold-pale:         #FFE898;
+        --gold-light:        #F0C060;
+
+        --bg-header:         linear-gradient(90deg, #100200, #3A0A00, #581500, #3A0A00, #100200);
+        --bg-hero:           linear-gradient(135deg, #180400, #4A1000, #6B2000, #4A1000, #180400);
+        --hero-gradient:     linear-gradient(to bottom, rgba(13,2,0,0) 0%, rgba(13,2,0,0.8) 70%, #0d0200 100%);
+        --hero-accent-line:  linear-gradient(90deg, transparent, #8B3000 30%, #C84800 50%, #8B3000 70%, transparent);
+
+        --bg-lesson:         linear-gradient(135deg, rgba(18,5,0,.85), rgba(30,8,0,.9));
+        --bg-lesson-hover:   linear-gradient(135deg, rgba(30,8,0,.95), rgba(50,12,0,.95));
+        --border-lesson:     rgba(140,50,0,.3);
+        --border-lesson-hover: rgba(200,80,0,.6);
+
+        --nav-border:        rgba(139,74,0,0.3);
+        --tabs-bg:           rgba(0,0,0,0.25);
+        --tabs-border:       rgba(139,74,0,0.25);
+        --tab-active-text:   var(--gold);
+        --tab-inactive-text: #906040;
+        --tab-hover-text:    #E0A060;
+
+        --prog-bg:           rgba(139,74,0,.3);
+        --prog-fill:         linear-gradient(90deg, #8B2000, #FF6020, #FFB040);
+
+        --avatar-border:     #FF7030;
+        --avatar-bg:         linear-gradient(135deg, #6B1A00, #C03000);
+        --avatar-text:       #F0C060;
+        --avatar-initial:    #FFE898;
+
+        --btn-periods-bg:         rgba(139,60,0,0.4);
+        --btn-periods-border:     #8B4A00;
+        --btn-periods-text:       #D4822A;
+        --btn-periods-hover-bg:   rgba(200,80,0,0.4);
+        --btn-periods-hover-border: #FF7030;
+
+        --badge-bg:          rgba(255,160,0,0.1);
+        --badge-border:      rgba(255,160,0,0.25);
+        --badge-text:        #FFE898;
+
+        --logo-accent:       var(--gold);
+        --empty-text:        #7A2000;
+        --section-title-color:    #A07040;
+        --section-divider:        rgba(140,50,0,.3);
+        --timeline-desc-color:    #A07050;
+        --capitol-header-color:   #D4822A;
+        --capitol-header-border:  #C84800;
+        --capitol-header-bg:      rgba(160,60,0,0.15);
+
+        --hc-card-bg: rgba(20,8,0,.78);
+--hc-card-border: rgba(255,140,40,.28);
+--hc-card-shadow: rgba(0,0,0,.28);
+--hc-card-title: var(--gold-pale);
+--hc-card-muted: #a07050;
+--hc-card-accent: #ffd060;
+--hc-progress: linear-gradient(90deg,#c84800,#ff8c00,#ffd060);
+    }
+
+    /* ── 2. TEMA TRADITII – suprascriere variabile ── */
+    body.theme-traditii {
+        --bg-global:         #0d0210;
+        --fire-dark:         #120520;
+        --fire-mid:          #5B2B7A;
+        --fire-bright:       #8938B8;
+        --accent:            #AB64FF;
+        --accent-soft:       rgba(171,100,255,0.2);
+
+        --bg-header:         linear-gradient(90deg, #100216, #2A083A, #450A58, #2A083A, #100216);
+        --bg-hero:           linear-gradient(135deg, #100216, #2A083A, #450A58, #2A083A, #100216);
+        --hero-gradient:     linear-gradient(to bottom, rgba(26,6,36,0.3) 0%, rgba(16,2,22,0.8) 70%, #0d0210 100%);
+        --hero-accent-line:  linear-gradient(90deg, transparent, var(--accent), transparent);
+
+        --bg-lesson:         rgba(30, 10, 50, 0.6);
+        --bg-lesson-hover:   rgba(45, 15, 75, 0.8);
+        --border-lesson:     rgba(107,58,139,0.35);
+        --border-lesson-hover: rgba(171,100,255,0.6);
+
+        --nav-border:        rgba(171,100,255,0.3);
+        --tabs-bg:           rgba(20,5,30,0.4);
+        --tabs-border:       rgba(171,100,255,0.25);
+        --tab-active-text:   #E8D0FF;
+        --tab-inactive-text: #9B80C0;
+        --tab-hover-text:    #C8A8F0;
+
+        --prog-bg:           rgba(171,100,255,0.1);
+        --prog-fill:         var(--accent);
+
+        --avatar-border:     var(--accent);
+        --avatar-bg:         linear-gradient(135deg, #4B1A66, #6B3A8B);
+        --avatar-text:       #E8D0FF;
+        --avatar-initial:    #E8D0FF;
+
+        --btn-periods-bg:         rgba(90,40,140,0.4);
+        --btn-periods-border:     #6B3A8B;
+        --btn-periods-text:       #E8D0FF;
+        --btn-periods-hover-bg:   rgba(130,60,200,0.4);
+        --btn-periods-hover-border: #AB64FF;
+
+        --badge-bg:          rgba(171,100,255,0.1);
+        --badge-border:      rgba(171,100,255,0.25);
+        --badge-text:        #E8D0FF;
+
+        --logo-accent:       var(--accent);
+        --empty-text:        #D0A0FF;
+        --section-title-color:    #C0A0E8;
+        --section-divider:        rgba(171,100,255,0.25);
+        --timeline-desc-color:    #A080C0;
+        --capitol-header-color:   #C8A8F0;
+        --capitol-header-border:  #8B5AAB;
+        --capitol-header-bg:      rgba(90,40,140,0.15);
+
+        --hc-card-bg: rgba(18,6,35,.82);
+--hc-card-border: rgba(171,100,255,.32);
+--hc-card-shadow: rgba(80,20,140,.25);
+--hc-card-title: #ead8ff;
+--hc-card-muted: #b995d8;
+--hc-card-accent: #d7b4ff;
+--hc-progress: linear-gradient(90deg,#6b3a8b,#ab64ff,#e8d0ff);
+    }
+
+    /* ── 3. BASE ── */
+    body, html {
+        font-family: 'IM Fell English', Georgia, serif;
+        background-color: var(--bg-global);
+        color: var(--gold-pale);
+        min-height: 100vh;
+        margin: 0; padding: 0;
+        transition: background-color 0.4s ease, color 0.4s ease;
+    }
+
+    /* Center and constrain content width */
+    body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    main {
+        flex: 1;
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    /* ── 3.5. MAX-WIDTH CONSTRAINTS FOR RESPONSIVE LAYOUT ── */
+    main, .page-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    @@media (max-width: 1400px) {
+        main, .page-container { max-width: 95%; }
+    }
+    @@media (max-width: 768px) {
+        main, .page-container { max-width: 98%; }
+    }
+
+    /* Limit main content width for better reading */
+    .relative[style*="z-index: 10"] {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* Ensure all sections respect max-width on large screens */
+    section {
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
+
+    /* Ensure hero section respects max-width on large screens */
+    @@media (min-width: 1400px) {
+        [style*="z-index: 10"] > * {
+            margin: 0 auto;
+        }
+        section {
+            display: flex;
+            justify-content: center;
+        }
+    }
+
+    /* ── 4. THEME ICONS (require CSS ::before) ── */
+    .logo-icon::before        { content: '⚔️'; }
+    .icon-periods::before     { content: '🏰'; }
+    body.theme-traditii .logo-icon::before    { content: '🎭'; }
+    body.theme-traditii .icon-periods::before { content: '🏛️'; }
+    body.theme-traditii .lesson-title-text    { color: #E8D0FF; text-shadow: 0 0 8px rgba(171,100,255,0.4); }
+
+    /* ── 5. EMBER PARTICLE ANIMATION ── */
+    .ember {
+        position: absolute; border-radius: 50%;
+        animation: rise linear infinite; opacity: 0;
+    }
+    @@keyframes rise {
+        0%   { transform: translateY(0) translateX(0); opacity: 0; }
+        8%   { opacity: .9; }
+        85%  { opacity: .4; }
+        100% { transform: translateY(-95vh) translateX(var(--d)); opacity: 0; }
+    }
+
+    /* ── 6. GLOW ORBS ── */
+    .glow-orb {
+        position: fixed; pointer-events: none; border-radius: 50%; z-index: 0;
+        animation: orb-pulse 6s ease-in-out infinite alternate;
+    }
+    .orb-top {
+        width: clamp(300px,50vw,600px); height: clamp(300px,50vw,600px);
+        background: radial-gradient(circle, var(--fire-mid) 0%, transparent 65%);
+        top: -20%; left: -10%; opacity: .15;
+    }
+    .orb-bottom {
+        width: clamp(200px,40vw,500px); height: clamp(200px,40vw,500px);
+        background: radial-gradient(circle, var(--accent) 0%, transparent 65%);
+        bottom: -15%; right: -8%; opacity: .12; animation-delay: -3s;
+    }
+    @@keyframes orb-pulse {
+        from { transform: scale(1);    opacity: .12; }
+        to   { transform: scale(1.15); opacity: .20; }
+    }
+
+    /* ── 7. JS-TOGGLED TAB STATES ── */
+    .tab-panel          { display: none; }
+    .tab-panel.active   { display: block; }
+    .tab-btn.active     { color: var(--tab-active-text); border-bottom-color: var(--accent); }
+
+    /* ── 8. LESSON ROW (pseudo-elements & locked state) ── */
+   .lesson-row.locked::before {
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--fire-bright) 55%, black), color-mix(in srgb, var(--accent) 55%, black));
+    opacity: .5;
+}
+    .lesson-row.locked         { opacity: .6; cursor: not-allowed; pointer-events: none; }
+    .lesson-row.locked::before { background: linear-gradient(to bottom, #4A3000, #6A4500); }
+
+    /* ── 9. TIMELINE SPINE ── */
+    .timeline::before {
+        content: ''; position: absolute; left: 50px; top: 0; bottom: 0; width: 2px;
+        background: linear-gradient(to bottom, var(--accent), transparent);
+    }
+
+    /* ── 10. DONE LESSON OVERRIDES ── */
+    .lesson-done                { border-color: rgba(0,200,80,.2) !important; }
+    .lesson-done:hover          { border-color: rgba(0,200,80,.4) !important; background: rgba(0,180,80,.06) !important; }
+</style>

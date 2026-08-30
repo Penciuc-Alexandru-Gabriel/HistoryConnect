@@ -1,0 +1,189 @@
+@using HistoryConnect.Models
+@model HistoryConnect.Pages.IndexModel
+
+@{
+    string GetIconCapitol(string titlu)
+    {
+        var t = titlu.ToLower();
+        if (t.Contains("daci") || t.Contains("geto")) return "⚔️";
+        if (t.Contains("burebista") || t.Contains("decebal")) return "👑";
+        if (t.Contains("cucer")) return "🏛️";
+        if (t.Contains("provincia") || t.Contains("viata")) return "🏺";
+        if (t.Contains("migratie") || t.Contains("popoare")) return "🌊";
+        if (t.Contains("formare") || t.Contains("poporul")) return "🧬";
+        if (t.Contains("tara romaneasca") || t.Contains("basarab")) return "🏰";
+        if (t.Contains("moldova") || t.Contains("transilvania")) return "🗺️";
+        if (t.Contains("stefan")) return "🛡️";
+        if (t.Contains("vlad") || t.Contains("tepes")) return "🧛";
+        if (t.Contains("mihai") || t.Contains("viteazul")) return "🗡️";
+        if (t.Contains("fanariot")) return "🕯️";
+        if (t.Contains("1848") || t.Contains("revolutie")) return "✊";
+        if (t.Contains("cuza") || t.Contains("unirea")) return "🤝";
+        if (t.Contains("marea unire") || t.Contains("1918")) return "🇷🇴";
+        if (t.Contains("secolul xx") || t.Contains("contemporan")) return "🏭";
+        return "📜";
+    }
+    string GetIconTraditii(string titlu) {
+    var t = titlu.ToLower();
+    if (t.Contains("daci") || t.Contains("geto")) return "🔥";
+    if (t.Contains("burebista") || t.Contains("decebal")) return "🏺";
+    if (t.Contains("cucer")) return "🎨";
+    if (t.Contains("provincia") || t.Contains("viata")) return "🍇";
+    if (t.Contains("migratie") || t.Contains("popoare")) return "🌾";
+    if (t.Contains("formare") || t.Contains("poporul")) return "🎭";
+    if (t.Contains("tara romaneasca") || t.Contains("basarab")) return "👑";
+    if (t.Contains("moldova") || t.Contains("transilvania")) return "🧵";
+    if (t.Contains("stefan")) return "⛪";
+    if (t.Contains("vlad") || t.Contains("tepes")) return "🕯️";
+    if (t.Contains("mihai") || t.Contains("viteazul")) return "🎺";
+    if (t.Contains("fanariot")) return "🎻";
+    if (t.Contains("1848") || t.Contains("revolutie")) return "🎶";
+    if (t.Contains("cuza") || t.Contains("unirea")) return "💃";
+    if (t.Contains("marea unire") || t.Contains("1918")) return "🇷🇴";
+    if (t.Contains("secolul xx") || t.Contains("contemporan")) return "🎪";
+    return "✨";
+}
+
+    bool esteTraditii = Model.CategorieCurenta == TipLectie.Traditii;
+    string iconFn(string titlu) => esteTraditii ? GetIconTraditii(titlu) : GetIconCapitol(titlu);
+}
+
+<div class="max-w-212.5 mx-auto my-7.5 px-4">
+
+@if (Model.CapitolSelectat != null)
+{
+    @* ── Titlu secțiune lectii capitol ── *@
+    <div class="flex items-center gap-2.5 uppercase tracking-[.12em] mb-3.5"
+         style="font-family:'Cinzel',serif; font-size:clamp(12px,1.8vw,15px); color:var(--section-title-color);">
+        Lecțiile Capitolului — @Model.CapitolSelectat.Titlu
+        <span class="flex-1 h-px" style="background:var(--section-divider);"></span>
+    </div>
+
+    var lectiiDinCapitol = Model.CapitolSelectat.Lectii
+        .Where(l => l.Tip == Model.CategorieCurenta)
+        .OrderBy(l => l.Ordine)
+        .ToList();
+
+    if (lectiiDinCapitol.Any())
+    {
+        @foreach (var lectie in lectiiDinCapitol)
+        {
+            bool blocat = !Model.EsteLogat && Model.CapitolSelectat.IdCapitol != Model.PrimulCapitolIdLiber;
+            bool completata = Model.LectiiCompletateIds.Contains(lectie.IdLectie);
+
+            var href = blocat
+                ? "?showPopup=true"
+                : $"?period={Model.PerioadaSelectata!.IdPerioada}&capitol={Model.CapitolSelectat.IdCapitol}&category={Model.CategorieCurenta}&lessonId={lectie.IdLectie}";
+
+            <a href="@href"
+               class="lesson-row @(blocat ? "locked" : "") @(completata ? "lesson-done" : "")
+                      flex items-center gap-4 rounded-[10px] border mb-3 relative overflow-hidden no-underline
+                      min-h-[68px] w-full box-border transition-all duration-[220ms]
+                      @(blocat ? "" : "hover:translate-x-1 hover:shadow-[0_4px_20px_rgba(0,0,0,.3)]")"
+               style="padding:18px 22px; background:var(--bg-lesson); border-color:var(--border-lesson);"
+               @(blocat ? "" : $"onmouseenter=\"this.style.background='var(--bg-lesson-hover)';this.style.borderColor='var(--border-lesson-hover)'\" onmouseleave=\"this.style.background='var(--bg-lesson)';this.style.borderColor='var(--border-lesson)'\"")>
+
+                @* Iconiță lecție *@
+                <div class="shrink-0 text-[28px] leading-none min-w-9 text-center rounded-lg p-1"
+                     style="@(completata ? "background:rgba(0,180,80,.15);border:1px solid rgba(0,200,80,.4);" : esteTraditii ? "background:var(--trad-dark,#1a0030);border:1px solid var(--trad-accent,#AB64FF);" : "")">
+                    @if (blocat)         { <span>🔒</span> }
+                    else if (completata) { <span style="font-size:1.1rem;color:#40c060;font-weight:700;">✓</span> }
+                    else                 { @iconFn(lectie.Titlu) }
+                </div>
+
+                @* Info lecție *@
+                <div class="flex-1 min-w-0">
+                    <div class="lesson-title-text font-bold mb-1 overflow-hidden text-ellipsis whitespace-nowrap"
+                         style="font-family:'Cinzel',serif; font-size:clamp(13px,1.8vw,15px); color:var(--gold-light);
+                                @(blocat ? "opacity:.45" : "")">
+                        @lectie.Titlu
+                    </div>
+                    @if (blocat)
+                    {
+                        <div class="text-[10px]" style="color:#7A4020;">Necesită cont gratuit</div>
+                    }
+                    else if (completata)
+                    {
+                        <div class="text-[10px] mt-0.5" style="color:#40c060;">✓ Lecție finalizată</div>
+                    }
+                </div>
+
+                @* Badge finalizat *@
+                @if (completata)
+                {
+                    <span class="shrink-0 text-[10px] font-bold px-2 py-1 rounded"
+                          style="background:rgba(0,180,80,.15);color:#40c060;border:1px solid rgba(0,200,80,.25);">
+                        ✓ Finalizat
+                    </span>
+                }
+
+                @* Arrow *@
+                <span class="shrink-0 text-base transition-transform duration-200"
+                      style="color:@(blocat ? "#4A2800" : completata ? "#40c060" : esteTraditii ? "var(--trad-accent,#AB64FF)" : "var(--accent)")">›</span>
+
+            </a>
+        }
+    }
+    else
+    {
+        <div class="text-center p-8 opacity-70" style="color:@(esteTraditii ? "#8858AA" : "#7A4020")">
+            Nu există lecții de tip @(esteTraditii ? "tradiții" : "istorie") în acest capitol încă.
+        </div>
+    }
+
+    <a href="?period=@Model.PerioadaSelectata!.IdPerioada&category=@Model.CategorieCurenta"
+       class="inline-flex items-center gap-1.5 mt-5 no-underline transition-colors duration-200"
+       style="color:@(esteTraditii ? "#8858AA" : "#7A4020"); font-size:.85rem; font-family:'Cinzel',serif;">
+        ← Înapoi la capitole
+    </a>
+}
+else
+{
+    @* ── Lista capitole ale perioadei ── *@
+    <div class="flex items-center gap-2.5 uppercase tracking-[.12em] mb-3.5"
+         style="font-family:'Cinzel',serif; font-size:clamp(12px,1.8vw,15px); color:var(--section-title-color);">
+        Capitolele Perioadei
+        <span class="flex-1 h-px" style="background:var(--section-divider);"></span>
+    </div>
+
+    @foreach (Capitol capitol in Model.PerioadaSelectata!.Capitole.OrderBy(c => c.NrOrdine))
+    {
+        bool blocat = !Model.EsteLogat && capitol.IdCapitol != Model.PrimulCapitolIdLiber;
+
+        var href = blocat
+            ? "?showPopup=true"
+            : $"?period={Model.PerioadaSelectata.IdPerioada}&capitol={capitol.IdCapitol}&category={Model.CategorieCurenta}";
+
+        <a href="@href"
+           class="lesson-row @(blocat ? "locked" : "")
+                  flex items-center gap-4 rounded-[10px] border mb-3 relative overflow-hidden no-underline
+                  min-h-[68px] w-full box-border transition-all duration-[220ms]
+                  @(blocat ? "" : "hover:translate-x-1 hover:shadow-[0_4px_20px_rgba(0,0,0,.3)]")"
+           style="padding:18px 22px; background:var(--bg-lesson); border-color:var(--border-lesson);"
+           @(blocat ? "" : $"onmouseenter=\"this.style.background='var(--bg-lesson-hover)';this.style.borderColor='var(--border-lesson-hover)'\" onmouseleave=\"this.style.background='var(--bg-lesson)';this.style.borderColor='var(--border-lesson)'\"")>
+
+            <div class="shrink-0 text-[28px] leading-none min-w-9 text-center rounded-lg p-1"
+                 style="@(esteTraditii ? "background:var(--trad-dark,#1a0030);border:1px solid var(--trad-accent,#AB64FF);" : "")">
+                @(blocat ? "🔒" : iconFn(capitol.Titlu))
+            </div>
+
+            <div class="flex-1 min-w-0">
+                <div class="lesson-title-text font-bold mb-1 overflow-hidden text-ellipsis whitespace-nowrap"
+                     style="font-family:'Cinzel',serif; font-size:clamp(13px,1.8vw,15px); color:var(--gold-light);
+                            @(blocat ? "opacity:.45" : "")">
+                    @capitol.Titlu
+                </div>
+                @if (blocat)
+                {
+                    <div class="text-[10px]" style="color:#7A4020;">Necesită cont gratuit</div>
+                }
+            </div>
+
+            <span class="shrink-0 text-base transition-transform duration-200"
+                  style="color:@(blocat ? "#4A2800" : esteTraditii ? "var(--trad-accent,#AB64FF)" : "var(--accent)")">›</span>
+
+        </a>
+    }
+}
+
+</div>

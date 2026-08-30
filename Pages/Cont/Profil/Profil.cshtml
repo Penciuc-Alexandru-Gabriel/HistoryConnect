@@ -1,0 +1,337 @@
+@page
+@model HistoryConnect.Pages.Cont.Profil.ProfilModel
+@{
+    ViewData["Title"] = "Profilul meu";
+    var nivel = Model.Student?.NivelCurent ?? 1;
+    var xp = Model.Student?.XpTotal ?? 0;
+    var xpNecesar = HistoryConnect.Servicii.ServiciuProgres.PragCumulativ(nivel + 1);
+    var progresXp = Math.Min((int)((double)xp / xpNecesar * 100), 100);
+}
+
+<partial name="_HistoryStyles" />
+
+<style>
+    .avatar-modal-overlay { display: none; }
+    .avatar-modal-overlay.open { display: flex; }
+    .avatar-trigger:hover .avatar-trigger-overlay { opacity: 1; }
+    .avatar-card.selectat { border-color: #40C060; background: rgba(64,192,96,0.1); }
+    .avatar-card.blocat { opacity: 0.45; cursor: not-allowed; filter: grayscale(60%); }
+    .insigna-card.castigata:hover { transform: translateY(-3px); border-color: #FF7030; }
+    .insigna-card.blocata { opacity: 0.4; filter: grayscale(80%); }
+</style>
+
+<div class="fixed inset-0 z-0 pointer-events-none page-bg"></div>
+
+@* Avatar Modal *@
+<div class="avatar-modal-overlay fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center" style="display:none; z-index:1000;"
+     id="avatarModal">
+    <div class="bg-linear-to-br from-[#2a0e00] to-[#1a0800] border-2 border-[#8B4A00] rounded-2xl
+                p-8 max-w-170 w-[90%] max-h-[80vh] overflow-y-auto shadow-[0_0_60px_rgba(255,80,0,0.2)]">
+        <div class="font-['Cinzel',serif] text-xl font-bold text-[#FFE898] mb-6 text-center
+                    border-b border-[#5A2A00] pb-4">
+            🧙 Alege avatarul tău
+        </div>
+        @if (TempData["Eroare"] != null)
+        {
+            <div class="bg-red-50 border border-red-300 text-red-700 rounded-lg px-3 py-2 text-sm mb-3">
+                ⚠️ @TempData["Eroare"]
+            </div>
+        }
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-4">
+            @foreach (var avatar in Model.AvatareDisponibile)
+            {
+                bool eSelectat = Model.Utilizator?.IdAvatar == avatar.IdAvatar;
+                bool eDeblocat = nivel >= avatar.NivelNecesar;
+                <form method="post" asp-page-handler="SchimbaAvatar" class="w-full">
+                    <input type="hidden" name="idAvatar" value="@avatar.IdAvatar" />
+                    <button type="submit"
+                            class="avatar-card bg-white/4 border border-[#5A3000] rounded-xl
+                                   px-2 py-3.5 cursor-pointer flex flex-col items-center gap-2
+                                   transition-all duration-200 hover:-translate-y-0.5
+                                   hover:border-[#FF7030] hover:bg-[rgba(255,112,48,0.1)]
+                                   font-['Cinzel',serif] text-inherit w-full
+                                   @(eSelectat ? "selectat" : "") @(!eDeblocat ? "blocat" : "")"
+                            @(!eDeblocat ? "disabled" : "")>
+                        <div>
+                            @if (!string.IsNullOrEmpty(avatar.UrlPoza))
+                            {
+                                <img src="@avatar.UrlPoza" class="w-16 h-16 object-cover rounded-full block" />
+                            }
+                            else
+                            {
+                                <span class="text-4xl block text-center">🧙</span>
+                            }
+                        </div>
+                        <div class="font-['Cinzel',serif] text-[11px] text-[#D4A060] text-center leading-tight min-h-7 flex items-center justify-center">
+                            @avatar.NumeAvatar
+                        </div>
+                        @if (!eDeblocat)
+                        {
+                            <div class="text-[10px] text-[#8A5030]">🔒 Nivel @avatar.NivelNecesar</div>
+                        }
+                        @if (eSelectat)
+                        {
+                            <div class="text-[10px] text-[#40C060] font-semibold">✓ Activ</div>
+                        }
+                    </button>
+                </form>
+            }
+        </div>
+        <button class="block mx-auto mt-6 bg-transparent border border-[#5A3000] rounded-lg
+                       text-[#A07050] px-7 py-2 cursor-pointer text-sm
+                       hover:border-[#FF7030] hover:text-[#FF7030] transition-colors"
+                onclick="closeAvatarModal()">
+            Închide
+        </button>
+    </div>
+</div>
+
+<div class="relative z-10 max-w-225 mx-auto px-4 sm:px-6 py-8 sm:py-12">
+
+    @* Header profil *@
+    <div class="flex items-center gap-5 mb-9">
+        <button onclick="openAvatarModal()"
+                class="avatar-trigger relative w-20 h-20 rounded-full border-[3px] border-[#FF7030]
+                       overflow-hidden shrink-0 bg-linear-to-br from-[#6B1A00] to-[#C03000]
+                       flex items-center justify-center cursor-pointer
+                       hover:border-[#FFB060] hover:shadow-[0_0_16px_rgba(255,112,48,0.4)]
+                       transition-all duration-200">
+            @if (!string.IsNullOrEmpty(Model.Utilizator?.Avatar?.UrlPoza))
+            {
+                <img src="@Model.Utilizator.Avatar.UrlPoza" class="w-full h-full object-cover" />
+            }
+            else
+            {
+                <span class="font-['Cinzel',serif] text-3xl font-bold text-[#FFE898]">
+                    @Model.Utilizator?.UserName?.Substring(0, 1).ToUpper()
+                </span>
+            }
+            <div class="avatar-trigger-overlay absolute inset-0 bg-black/50 flex items-center
+                         justify-center opacity-0 transition-opacity duration-200 rounded-full
+                         text-[11px] text-white font-semibold text-center leading-tight px-1">
+                Schimbă
+            </div>
+        </button>
+        <div>
+            <div class="font-['Cinzel',serif] text-2xl sm:text-3xl font-black text-[#FFE898]">
+                @Model.Utilizator?.UserName
+            </div>
+            <div class="text-xs text-[#A07050] mt-1">@Model.Utilizator?.Email</div>
+            <div class="text-[11px] text-[#7A5030] mt-1">
+                Creat la @(Model.Utilizator?.DataInregistrare.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? "—")
+            </div>
+            <div class="mt-2 flex items-center gap-2.5 flex-wrap">
+                <span class="font-['Cinzel',serif] text-xs text-[#D4822A]">Nivel @nivel</span>
+                <div class="w-36 bg-black/30 rounded-full h-2">
+                    <div style="width:@(progresXp)%"
+                         class="h-full rounded-full bg-linear-to-r from-[#C84000] via-[#FF8040] to-[#FFC040] transition-all duration-500">
+                    </div>
+                </div>
+                <span class="text-[11px] text-[#8A6030]">@xp / @xpNecesar XP</span>
+            </div>
+        </div>
+    </div>
+
+    @* Stats *@
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3.5 mb-6">
+        @{
+            var stats = new[] {
+                ("📖", Model.LectiiCompletate.ToString(), "Lecții completate"),
+                ("🏆", Model.InsigneleUtilizatorului.Count.ToString(), "Insigne obținute"),
+                ("⭐", xp.ToString(), "XP total"),
+                ("📚", Model.TotalLectii.ToString(), "Total lecții"),
+                ("🎯", Model.QuizuriCompletate.ToString(), "Quiz-uri completate"),
+            };
+        }
+        @foreach (var (icon, val, label) in stats)
+        {
+            <div class="bg-white/4 border border-[#3A1A00] rounded-xl p-4 text-center">
+                <div class="text-xl mb-1.5">@icon</div>
+                <div class="font-['Cinzel',serif] text-2xl font-bold text-[#FFE898]">@val</div>
+                <div class="text-[11px] text-[#7A5030] mt-1">@label</div>
+            </div>
+        }
+    </div>
+
+    @* Cabinet Insigne *@
+    <div class="bg-white/2 border border-[#3A1800] rounded-xl p-6 mb-6">
+        <div class="font-['Cinzel',serif] text-[15px] font-bold text-[#D4822A] mb-5 flex items-center gap-2">
+            🏅 Cabinet insigne
+        </div>
+
+        @if (!Model.ToateInsignele.Any())
+        {
+            <div class="flex flex-col items-center justify-center p-5 gap-3">
+                <div class="flex gap-3 opacity-25">
+                    @for (int i = 0; i < 4; i++)
+                    {
+                        <div class="w-12 h-12 rounded-full bg-linear-to-b from-[#2a2a2a] to-[#111] border-2 border-[#333]"></div>
+                    }
+                </div>
+                <p class="font-['Cinzel',serif] text-[#5A3010] text-xs text-center m-0">
+                    Nu există insigne disponibile momentan.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4">
+                @foreach (var insigna in Model.ToateInsignele)
+                {
+                    var ci = Model.InsigneleUtilizatorului.FirstOrDefault(x => x.IdInsigna == insigna.IdInsigna);
+                    var castigata = ci != null;
+                    <div class="insigna-card flex flex-col items-center gap-2.5 p-4 rounded-xl
+                                border relative transition-all duration-200
+                                @(castigata ? "castigata border-[#8B5020] bg-[rgba(139,80,32,0.12)]" : "blocata border-[#3A1800] bg-white/3")"
+                         title="@insigna.Nume — @insigna.ConditiiObtinere">
+
+                        @if (!castigata)
+                        {
+                            <span class="absolute top-1.5 right-1.5 text-xs opacity-60">🔒</span>
+                        }
+
+                        <div class="w-17.5 h-17.5 rounded-full flex items-center justify-center
+                                     bg-[radial-gradient(circle,#2a1200,#111)] border-2 border-[#3A1800]
+                                     shadow-[0_4px_12px_rgba(0,0,0,0.6)] text-4xl">
+                            @if (!string.IsNullOrEmpty(insigna.UrlImagine))
+                            {
+                                <img src="@insigna.UrlImagine" class="w-14 h-14 object-contain" />
+                            }
+                            else
+                            {
+                                <span>🏅</span>
+                            }
+                        </div>
+
+                        <div class="font-['Cinzel',serif] text-[11px] text-[#D4A060] text-center leading-snug">
+                            @insigna.Nume
+                        </div>
+
+                        @if (castigata)
+                        {
+                            <div class="text-[10px] text-[#5A9050]">✓ @ci!.DataObtinere.ToString("dd.MM.yyyy")</div>
+                        }
+                        else
+                        {
+                            <div class="text-[10px] text-[#6A4020] text-center leading-snug">@insigna.ConditiiObtinere</div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    @* Istoric Quizuri *@
+    <div class="bg-white/2 border border-[#3A1800] rounded-xl p-6 mb-6">
+        <div class="font-['Cinzel',serif] text-[15px] font-bold text-[#D4822A] mb-5 flex items-center gap-2">
+            🎯 Istoric Quiz-uri
+        </div>
+        @if (Model.IstoricQuizuri.Count == 0)
+        {
+            <div class="text-center py-8 text-[#5A3010]">
+                <div class="text-4xl mb-3 opacity-40">📝</div>
+                <div class="font-['Cinzel',serif] text-sm">Nu ai completat niciun quiz încă.</div>
+            </div>
+        }
+        else
+        {
+            @foreach (var pq in Model.IstoricQuizuri)
+            {
+                var corecte = Model.CorectePerProgres.GetValueOrDefault(pq.IdProgresQ, 0);
+                var total   = Model.TotalIntrebariPerQuiz.GetValueOrDefault(pq.IdQuiz, 0);
+                var procent = total > 0 ? (int)((double)corecte / total * 100) : 0;
+                var scoreColor = procent >= 80 ? "text-[#60D080]" : procent >= 50 ? "text-[#FFB030]" : "text-[#FF6060]";
+                var scoreIcon  = procent >= 80 ? "🏆" : procent >= 50 ? "👍" : "💪";
+                var iconBg     = pq.Evaluat
+                    ? "bg-[rgba(255,180,0,0.12)] border border-[rgba(255,180,0,0.25)]"
+                    : "bg-white/5 border border-white/8";
+                var rowBg     = procent >= 50 ? "rgba(0,50,15,0.55)"  : "rgba(70,0,0,0.55)";
+                var rowBorder = procent >= 50 ? "rgba(0,200,80,0.22)" : "rgba(200,0,0,0.22)";
+
+                <div class="flex items-center gap-3.5 p-3 sm:p-4 rounded-xl mb-2.5
+                            transition-colors duration-200"
+                     style="background:@rowBg; border:1px solid @rowBorder;">
+                    <div class="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center text-xl @iconBg">
+                        @scoreIcon
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-['Cinzel',serif] text-sm text-[#E8C880] truncate">
+                            @(pq.Quiz?.Titlu ?? "Quiz")
+                        </div>
+                        <div class="text-[11px] text-[#7A5030] mt-0.5">
+                            📖 @(pq.Quiz?.Lectie?.Titlu ?? "—")
+                            &nbsp;·&nbsp;
+                            🕐 @pq.DataCompletare.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <div class="font-['Cinzel',serif] text-base font-bold @scoreColor">@pq.Scor %</div>
+                        <div class="text-[10px] text-[#6A4020] mt-0.5">@procent%</div>
+                        @if (pq.Evaluat)
+                        {
+                            <div class="text-[10px] text-[#FFB030] mt-0.5 font-semibold">⭐ XP acordat</div>
+                        }
+                    </div>
+                    <a href="/Quiz/DetaliiQuiz?idProgresQ=@pq.IdProgresQ"
+                       class="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg text-xs
+                              font-['Cinzel',serif] no-underline shrink-0
+                              bg-[rgba(200,80,0,0.15)] text-[#D4822A] border border-[rgba(200,80,0,0.25)]
+                              hover:bg-[rgba(200,80,0,0.3)] hover:border-[rgba(200,80,0,0.5)]
+                              transition-colors duration-200">
+                        🔍 Detalii
+                    </a>
+                </div>
+            }
+        }
+    </div>
+
+    @* Avatar Section *@
+    <div class="bg-white/2 border border-[#3A1800] rounded-xl p-6">
+        <div class="font-['Cinzel',serif] text-[15px] font-bold text-[#D4822A] mb-5 flex items-center gap-2">
+            🧙 Avatar
+        </div>
+        <button onclick="openAvatarModal()"
+                class="flex items-center gap-2.5 bg-[rgba(255,112,48,0.08)] border border-[#8B4A00]
+                       rounded-xl px-5 py-3 cursor-pointer font-['Cinzel',serif] text-sm text-[#D4822A]
+                       hover:bg-[rgba(255,112,48,0.15)] hover:border-[#FF7030] hover:text-[#FF9050]
+                       transition-all duration-200 w-full mt-2">
+            <div class="w-10 h-10 rounded-full border-2 border-[#8B4A00] overflow-hidden
+                        bg-linear-to-br from-[#6B1A00] to-[#C03000]
+                        flex items-center justify-center shrink-0">
+                @if (!string.IsNullOrEmpty(Model.Utilizator?.Avatar?.UrlPoza))
+                {
+                    <img src="@Model.Utilizator.Avatar.UrlPoza" class="w-full h-full object-cover" />
+                }
+                else
+                {
+                    <span class="font-['Cinzel',serif] text-base text-[#FFE898]">
+                        @Model.Utilizator?.UserName?.Substring(0, 1).ToUpper()
+                    </span>
+                }
+            </div>
+            <div>
+                <div class="text-sm">@(Model.Utilizator?.Avatar?.NumeAvatar ?? "Default")</div>
+                <div class="text-[11px] text-[#6A4020] mt-0.5">Apasă pentru a schimba avatarul</div>
+            </div>
+            <div class="ml-auto text-lg text-[#5A3010]">›</div>
+        </button>
+    </div>
+
+</div>
+
+<script>
+    function openAvatarModal() {
+        document.getElementById('avatarModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeAvatarModal() {
+        document.getElementById('avatarModal').style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    document.getElementById('avatarModal').addEventListener('click', function(e) {
+        if (e.target === this) closeAvatarModal();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeAvatarModal();
+    });
+</script>

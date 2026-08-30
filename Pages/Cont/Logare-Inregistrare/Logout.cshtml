@@ -1,0 +1,20 @@
+@page "/Cont/Logare-Inregistrare/Logout"
+@model HistoryConnect.Pages.Cont.LogareInregistrare.LogoutModel
+@{
+    ViewData["Title"] = "Delogare";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delogare - HistoryConnect</title>
+</head>
+<body>
+    <form method="post">
+        @Html.AntiForgeryToken()
+        <button type="submit">Delogare</button>
+    </form>
+</body>
+</html>

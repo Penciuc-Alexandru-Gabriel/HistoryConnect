@@ -1,0 +1,16 @@
+{
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "database": "history_connect",
+            "username": "postgres",
+            "name": "HistoryConnect"
+        }
+    ],
+    "tailwindCSS.lint.suggestCanonicalClasses": "ignore",
+    "css.lint.unknownAtRules": "ignore"
+}
